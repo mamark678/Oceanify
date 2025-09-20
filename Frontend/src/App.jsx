@@ -3,8 +3,9 @@ import EditUser from "./pages/EditUser";
 import Home from "./pages/Home";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
-import UserPage from "./pages/UserPage"; // ✅ Import UserPage
+import UserPage from "./pages/UserPage"; 
 import "./styles/App.css";
+import UserPage2 from "./pages/UserPage2";
 
 function App() {
   return (
@@ -22,7 +23,7 @@ function App() {
         <Route path="/edit-user/:id" element={<EditUser />} />
 
         {/* ✅ New route for UserPage */}
-        <Route path="/userpage" element={<UserPage />} />
+        <Route path="/userpage" element={<UserPage2 />} />
       </Routes>
     </>
   );

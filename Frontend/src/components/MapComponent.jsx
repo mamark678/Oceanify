@@ -1,0 +1,190 @@
+import { useRef, useEffect, useState } from "react";
+import L from "leaflet";
+import "leaflet.heat";
+import "leaflet/dist/leaflet.css";
+import { temperatureLayer } from "../WeatherServiceLayers/TemperatureLayer";
+import { getWeather } from "../WeatherServiceLayers/WeatherService";
+import { TemperatureHeatmapLayer } from "../WeatherServiceLayers/TemperatureHeatMap";
+import { cities } from "../data/cities";
+import { SeaLevelHeatmapLayer } from "../WeatherServiceLayers/SeaLevelPressureHeatMap";
+
+export default function MapComponent() {
+  const temperatureHeatLayerRef = useRef(null);
+  const mapRef = useRef(null);
+  const seaLevelPressureHeatLayerRef = useRef(null);
+  const [isHeatmapVisible, setIsHeatmapVisible] = useState(true);
+  const [activeHeatmap, setActiveHeatmap] = useState("temperature");
+  const [heatmapLoaded, setHeatmapLoaded] = useState(false);
+
+  useEffect(() => {
+    const map = L.map("map").setView([7.908941, 125.078746], 5);
+    mapRef.current = map;
+
+    // Add OpenStreetMap tiles
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      minZoom: 1,
+      maxZoom: 19,
+      attribution:
+        '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+
+    // Add temperature labels for each city
+    cities.forEach(async (city) => {
+      const temp = (Math.random() * 10 + 25).toFixed(2);
+      const label = temperatureLayer(temp);
+      L.marker([city.lat, city.lon], { icon: label }).addTo(map);
+    });
+
+    async function loadHeatmap() {
+      try {
+        const promises = cities.map((city) => getWeather(city.lat, city.lon));
+        const results = await Promise.all(promises);
+
+        const cityData = results.map((data, index) => ({
+          lat: cities[index].lat,
+          lon: cities[index].lon,
+          value: data.temperature_2m ?? 0,
+        }));
+
+        // TEMPERATURE
+        const temperatureHeatMap = TemperatureHeatmapLayer(cityData);
+        temperatureHeatMap.addTo(mapRef.current);
+        temperatureHeatLayerRef.current = temperatureHeatMap;
+
+        // SEA LEVEL
+        const seaLevelHeatMap = SeaLevelHeatmapLayer(cityData);
+        seaLevelHeatMap.addTo(mapRef.current);
+        seaLevelPressureHeatLayerRef.current = seaLevelHeatMap;
+
+        setHeatmapLoaded(true);
+      } catch (err) {
+        console.error("Failed to load heatmap:", err);
+      }
+    }
+
+    loadHeatmap();
+
+    // Geolocation
+    let userMarker = null;
+    let userCircle = null;
+
+    function success(position) {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const accuracy = position.coords.accuracy;
+
+      if (userMarker) {
+        map.removeLayer(userMarker);
+        map.removeLayer(userCircle);
+      }
+
+      userMarker = L.marker([lat, lng]).addTo(map);
+      userCircle = L.circle([lat, lng], { radius: accuracy }).addTo(map);
+      map.setView([lat, lng], 6);
+    }
+
+    function error(err) {
+      if (err.code === 1) alert("Please allow geolocation access");
+      else alert("Cannot get current location.");
+    }
+
+    navigator.geolocation.watchPosition(success, error);
+
+    return () => {
+      map.remove();
+    };
+  }, []);
+
+  const showTemperatureHeatmap = () => {
+    if (!mapRef.current) return;
+
+    if (
+      seaLevelPressureHeatLayerRef.current &&
+      mapRef.current.hasLayer(seaLevelPressureHeatLayerRef.current)
+    ) {
+      mapRef.current.removeLayer(seaLevelPressureHeatLayerRef.current);
+    }
+
+    if (
+      temperatureHeatLayerRef.current &&
+      !mapRef.current.hasLayer(temperatureHeatLayerRef.current)
+    ) {
+      temperatureHeatLayerRef.current.addTo(mapRef.current);
+    }
+
+    setActiveHeatmap("temperature");
+  };
+
+  const showPressureHeatmap = () => {
+    if (!mapRef.current) return;
+
+    if (
+      temperatureHeatLayerRef.current &&
+      mapRef.current.hasLayer(temperatureHeatLayerRef.current)
+    ) {
+      mapRef.current.removeLayer(temperatureHeatLayerRef.current);
+    }
+
+    if (
+      seaLevelPressureHeatLayerRef.current &&
+      !mapRef.current.hasLayer(seaLevelPressureHeatLayerRef.current)
+    ) {
+      seaLevelPressureHeatLayerRef.current.addTo(mapRef.current);
+    }
+
+    setActiveHeatmap("pressure");
+  };
+
+  return (
+    <div style={{ position: "relative", height: "100vh", width: "100%" }}>
+      {/* Map container */}
+      <div id="map" style={{ height: "100%", width: "100%" }}></div>
+
+      {/* Heatmap buttons */}
+      <div
+        style={{
+          position: "absolute",
+          top: "10px",
+          right: "10px",
+          zIndex: 1000,
+          display: "flex",
+          flexDirection: "column",
+          pointerEvents: "auto",
+        }}
+      >
+        <button
+          onClick={showTemperatureHeatmap}
+          disabled={!heatmapLoaded}
+          style={{
+            marginBottom: "5px",
+            padding: "8px 12px",
+            border: "none",
+            borderRadius: "6px",
+            background: activeHeatmap === "temperature" ? "#f87171" : "#60a5fa",
+            color: "white",
+            cursor: heatmapLoaded ? "pointer" : "not-allowed",
+            width: "140px",
+          }}
+        >
+          Temperature
+        </button>
+
+        <button
+          onClick={showPressureHeatmap}
+          disabled={!heatmapLoaded}
+          style={{
+            padding: "8px 12px",
+            border: "none",
+            borderRadius: "6px",
+            background: activeHeatmap === "pressure" ? "#f87171" : "#60a5fa",
+            color: "white",
+            cursor: heatmapLoaded ? "pointer" : "not-allowed",
+            width: "140px",
+          }}
+        >
+          Sea Level Pressure
+        </button>
+      </div>
+    </div>
+  );
+}

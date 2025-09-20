@@ -30,8 +30,8 @@ export default function SignIn() {
 
       if (error) throw error;
 
-      alert("Login successful!");
-      navigate("/home"); // Redirect after login
+      alert("Login successful to homepage!");
+      navigate("/userpage"); // Redirect after login
     } catch (error) {
       setErrors(error.message || "Something went wrong");
     } finally {
