@@ -1,170 +1,61 @@
 // src/layers/Temperature.jsx
-// Global ocean temperature layer with realistic temperature variations
+// Enhanced temperature layer with better ocean filtering and visualization
 
 async function fetchTemperatureFromAPI(bbox) {
-  // Generate realistic global ocean temperature data
-  // Based on actual oceanographic patterns and seasonal variations
+  // bbox: [minLon, minLat, maxLon, maxLat] - optional
+  // Example placeholder returns more comprehensive sample data for ocean areas
   
+  // ====== Enhanced placeholder data covering ocean areas ======
   const oceanTemperaturePoints = [];
   
-  // Define major ocean regions with realistic temperature ranges
-  const oceanRegions = [
-    // PACIFIC OCEAN
-    // North Pacific (cooler)
-    { name: "North Pacific", centerLon: -150, centerLat: 45, radius: 15, baseTemp: 12, variation: 8 },
-    { name: "North Pacific East", centerLon: -130, centerLat: 40, radius: 12, baseTemp: 14, variation: 6 },
+  // Generate temperature data points across ocean areas in the Philippines region
+  const regions = [
+    // Philippine Sea
+    { centerLon: 126, centerLat: 13, radius: 3, baseTemp: 29 },
+    { centerLon: 128, centerLat: 15, radius: 2, baseTemp: 28.5 },
+    { centerLon: 127, centerLat: 11, radius: 2.5, baseTemp: 29.5 },
     
-    // Central Pacific (moderate)
-    { name: "Central Pacific", centerLon: -160, centerLat: 20, radius: 20, baseTemp: 24, variation: 4 },
-    { name: "Central Pacific East", centerLon: -120, centerLat: 15, radius: 15, baseTemp: 22, variation: 5 },
+    // South China Sea
+    { centerLon: 118, centerLat: 12, radius: 4, baseTemp: 30 },
+    { centerLon: 116, centerLat: 15, radius: 3, baseTemp: 29.8 },
+    { centerLon: 119, centerLat: 9, radius: 2, baseTemp: 30.2 },
     
-    // Tropical Pacific (warm)
-    { name: "Tropical Pacific West", centerLon: 160, centerLat: 10, radius: 18, baseTemp: 28, variation: 3 },
-    { name: "Tropical Pacific Central", centerLon: -150, centerLat: 5, radius: 25, baseTemp: 27, variation: 3 },
-    { name: "Tropical Pacific East", centerLon: -100, centerLat: 0, radius: 12, baseTemp: 26, variation: 4 },
+    // Celebes Sea
+    { centerLon: 121, centerLat: 6, radius: 3, baseTemp: 29.8 },
+    { centerLon: 123, centerLat: 4, radius: 2, baseTemp: 30.1 },
     
-    // South Pacific
-    { name: "South Pacific Warm", centerLon: 170, centerLat: -15, radius: 20, baseTemp: 25, variation: 4 },
-    { name: "South Pacific Cool", centerLon: -120, centerLat: -30, radius: 18, baseTemp: 18, variation: 6 },
-    { name: "South Pacific Cold", centerLon: -100, centerLat: -45, radius: 15, baseTemp: 12, variation: 5 },
-    
-    // ATLANTIC OCEAN
-    // North Atlantic
-    { name: "North Atlantic Warm", centerLon: -40, centerLat: 40, radius: 12, baseTemp: 16, variation: 8 },
-    { name: "North Atlantic Cool", centerLon: -20, centerLat: 55, radius: 10, baseTemp: 10, variation: 6 },
-    
-    // Tropical Atlantic
-    { name: "Caribbean", centerLon: -70, centerLat: 18, radius: 8, baseTemp: 28, variation: 2 },
-    { name: "Gulf Stream", centerLon: -60, centerLat: 35, radius: 6, baseTemp: 24, variation: 4 },
-    { name: "Tropical Atlantic", centerLon: -30, centerLat: 10, radius: 15, baseTemp: 27, variation: 3 },
-    
-    // South Atlantic
-    { name: "South Atlantic Warm", centerLon: -20, centerLat: -10, radius: 18, baseTemp: 26, variation: 3 },
-    { name: "South Atlantic Cool", centerLon: -30, centerLat: -35, radius: 15, baseTemp: 18, variation: 5 },
-    { name: "South Atlantic Cold", centerLon: -40, centerLat: -50, radius: 12, baseTemp: 8, variation: 4 },
-    
-    // INDIAN OCEAN
-    // Tropical Indian Ocean (very warm)
-    { name: "Arabian Sea", centerLon: 65, centerLat: 15, radius: 8, baseTemp: 29, variation: 2 },
-    { name: "Bay of Bengal", centerLon: 88, centerLat: 15, radius: 6, baseTemp: 28, variation: 2 },
-    { name: "Central Indian Ocean", centerLon: 80, centerLat: -5, radius: 20, baseTemp: 28, variation: 2 },
-    { name: "Western Indian Ocean", centerLon: 55, centerLat: -15, radius: 15, baseTemp: 27, variation: 3 },
-    
-    // Southern Indian Ocean
-    { name: "South Indian Warm", centerLon: 90, centerLat: -25, radius: 18, baseTemp: 22, variation: 4 },
-    { name: "South Indian Cool", centerLon: 70, centerLat: -40, radius: 15, baseTemp: 16, variation: 5 },
-    { name: "South Indian Cold", centerLon: 50, centerLat: -50, radius: 12, baseTemp: 10, variation: 4 },
-    
-    // SOUTHERN OCEAN (Antarctic waters - very cold)
-    { name: "Southern Ocean Pacific", centerLon: 150, centerLat: -60, radius: 25, baseTemp: 2, variation: 3 },
-    { name: "Southern Ocean Atlantic", centerLon: 0, centerLat: -60, radius: 20, baseTemp: 1, variation: 3 },
-    { name: "Southern Ocean Indian", centerLon: 90, centerLat: -60, radius: 20, baseTemp: 2, variation: 3 },
-    
-    // ARCTIC OCEAN (very cold)
-    { name: "Arctic Ocean", centerLon: 0, centerLat: 75, radius: 15, baseTemp: -1, variation: 2 },
-    { name: "Arctic Pacific", centerLon: -150, centerLat: 70, radius: 10, baseTemp: 0, variation: 3 },
-    { name: "Arctic Atlantic", centerLon: 10, centerLat: 80, radius: 8, baseTemp: -1, variation: 2 },
-    
-    // MEDITERRANEAN & REGIONAL SEAS
-    { name: "Mediterranean", centerLon: 15, centerLat: 38, radius: 8, baseTemp: 20, variation: 6 },
-    { name: "Black Sea", centerLon: 33, centerLat: 43, radius: 3, baseTemp: 15, variation: 8 },
-    { name: "Red Sea", centerLon: 38, centerLat: 20, radius: 4, baseTemp: 26, variation: 3 },
-    
-    // SOUTHEAST ASIAN SEAS (focus area - very warm)
-    { name: "South China Sea", centerLon: 115, centerLat: 12, radius: 8, baseTemp: 28, variation: 2 },
-    { name: "Philippine Sea", centerLon: 130, centerLat: 15, radius: 10, baseTemp: 28, variation: 2 },
-    { name: "Celebes Sea", centerLon: 121, centerLat: 3, radius: 4, baseTemp: 29, variation: 1 },
-    { name: "Java Sea", centerLon: 110, centerLat: -5, radius: 5, baseTemp: 29, variation: 2 },
-    { name: "Coral Sea", centerLon: 155, centerLat: -15, radius: 8, baseTemp: 26, variation: 3 },
+    // Sulu Sea
+    { centerLon: 119, centerLat: 8, radius: 2, baseTemp: 29.9 },
+    { centerLon: 121, centerLat: 8.5, radius: 1.5, baseTemp: 29.7 },
   ];
   
-  // Generate temperature points for each ocean region
-  oceanRegions.forEach(region => {
-    // More points for larger regions
-    const pointDensity = Math.max(20, Math.floor(region.radius * 2));
-    
-    for (let i = 0; i < pointDensity; i++) {
-      // Create realistic distribution patterns
-      const angle = (Math.PI * 2 * i) / pointDensity + Math.random() * 1.0;
+  // Generate points for each region
+  regions.forEach(region => {
+    const pointsInRegion = 15; // Number of points per region
+    for (let i = 0; i < pointsInRegion; i++) {
+      // Random distribution around region center
+      const angle = (Math.PI * 2 * i) / pointsInRegion + Math.random() * 0.5;
       const distance = Math.random() * region.radius;
       
-      // Add some clustering for realistic oceanographic patterns
-      const clusterFactor = Math.random() < 0.3 ? 0.5 : 1.0; // 30% chance of clustering
+      const lon = region.centerLon + Math.cos(angle) * distance;
+      const lat = region.centerLat + Math.sin(angle) * distance;
       
-      const lon = region.centerLon + Math.cos(angle) * distance * clusterFactor;
-      const lat = region.centerLat + Math.sin(angle) * distance * clusterFactor;
-      
-      // Ensure longitude wraps correctly
-      const normalizedLon = ((lon + 180) % 360) - 180;
-      
-      // Latitude-based temperature adjustment (cooler toward poles)
-      const latitudeEffect = Math.cos(lat * Math.PI / 180) * 2; // Up to 2°C variation
-      
-      // Seasonal variation (simplified)
-      const seasonalVariation = (Math.random() - 0.5) * region.variation;
-      
-      // Calculate final temperature
-      let temperature = region.baseTemp + latitudeEffect + seasonalVariation;
-      
-      // Apply realistic ocean temperature constraints
-      temperature = Math.max(-2, Math.min(35, temperature)); // Ocean freezes at -2°C, max ~35°C
-      temperature = Math.round(temperature * 10) / 10; // Round to 1 decimal
+      // Add some temperature variation
+      const tempVariation = (Math.random() - 0.5) * 2; // ±1°C variation
+      const temperature = region.baseTemp + tempVariation;
       
       oceanTemperaturePoints.push({
         type: "Feature",
         geometry: { 
           type: "Point", 
-          coordinates: [normalizedLon, lat] 
+          coordinates: [lon, lat] 
         },
         properties: { 
-          temp: temperature,
-          region: region.name,
-          depth: "surface" // All surface temperatures
+          temp: Math.round(temperature * 10) / 10 // Round to 1 decimal
         }
       });
     }
   });
-  
-  // Add some additional random points in major ocean basins for better coverage
-  const additionalPoints = 200;
-  for (let i = 0; i < additionalPoints; i++) {
-    const lon = (Math.random() * 360) - 180;
-    const lat = (Math.random() * 140) - 70; // Avoid extreme polar regions
-    
-    // Determine temperature based on latitude and ocean basin
-    let baseTemp;
-    const absLat = Math.abs(lat);
-    
-    if (absLat < 20) {
-      baseTemp = 27; // Tropical waters
-    } else if (absLat < 40) {
-      baseTemp = 20; // Temperate waters
-    } else if (absLat < 60) {
-      baseTemp = 10; // Cool waters
-    } else {
-      baseTemp = 2; // Polar waters
-    }
-    
-    const variation = (Math.random() - 0.5) * 8; // ±4°C variation
-    let temperature = baseTemp + variation;
-    temperature = Math.max(-2, Math.min(35, temperature));
-    temperature = Math.round(temperature * 10) / 10;
-    
-    oceanTemperaturePoints.push({
-      type: "Feature",
-      geometry: { 
-        type: "Point", 
-        coordinates: [lon, lat] 
-      },
-      properties: { 
-        temp: temperature,
-        region: "Open Ocean",
-        depth: "surface"
-      }
-    });
-  }
-  
-  console.log(`Generated ${oceanTemperaturePoints.length} global ocean temperature points`);
   
   return {
     type: "FeatureCollection",
@@ -172,75 +63,63 @@ async function fetchTemperatureFromAPI(bbox) {
   };
 }
 
-// Enhanced global ocean detection
+// Enhanced water detection using multiple methods
 function isPointOverWater(map, lngLat) {
   try {
     const style = map.getStyle();
     if (!style || !style.layers) return true;
     
-    // Look for water-related layers in the map style
+    // Look for water-related layers
     const waterLayers = style.layers.filter(layer => {
       const id = (layer.id || '').toLowerCase();
       const source = (layer.source || '').toLowerCase();
       return id.includes('water') || id.includes('ocean') || id.includes('sea') || 
-             source.includes('water') || source.includes('ocean') || source.includes('sea') ||
-             id.includes('marine') || id.includes('lake');
+             source.includes('water') || source.includes('ocean') || source.includes('sea');
     });
     
-    if (waterLayers.length > 0) {
-      const pixel = map.project(lngLat);
-      const bbox = [
-        [pixel.x - 3, pixel.y - 3],
-        [pixel.x + 3, pixel.y + 3]
+    if (waterLayers.length === 0) {
+      // Fallback: basic ocean area check for Philippines region
+      const [lon, lat] = lngLat;
+      
+      // Define basic ocean boundaries for Philippines
+      const oceanBounds = [
+        // Philippine Sea
+        { minLon: 125, maxLon: 130, minLat: 10, maxLat: 18 },
+        // South China Sea
+        { minLon: 115, maxLon: 122, minLat: 8, maxLat: 20 },
+        // Celebes Sea
+        { minLon: 120, maxLon: 125, minLat: 2, maxLat: 8 },
+        // Sulu Sea
+        { minLon: 118, maxLon: 122, minLat: 6, maxLat: 10 }
       ];
       
-      const features = map.queryRenderedFeatures(bbox, { 
-        layers: waterLayers.map(l => l.id) 
-      });
-      
-      if (features && features.length > 0) return true;
+      return oceanBounds.some(bounds => 
+        lon >= bounds.minLon && lon <= bounds.maxLon && 
+        lat >= bounds.minLat && lat <= bounds.maxLat
+      );
     }
     
-    // Fallback: comprehensive global ocean area detection
-    const [lon, lat] = lngLat;
-    
-    // Major land masses to exclude (simplified bounding boxes)
-    const landMasses = [
-      // North America
-      { minLon: -170, maxLon: -50, minLat: 25, maxLat: 75 },
-      // South America  
-      { minLon: -85, maxLon: -35, minLat: -60, maxLat: 15 },
-      // Europe
-      { minLon: -10, maxLon: 50, minLat: 35, maxLat: 75 },
-      // Africa
-      { minLon: -20, maxLon: 55, minLat: -40, maxLat: 40 },
-      // Asia
-      { minLon: 25, maxLon: 180, minLat: 5, maxLat: 75 },
-      // Australia
-      { minLon: 110, maxLon: 160, minLat: -45, maxLat: -10 },
-      // Greenland
-      { minLon: -75, maxLon: -10, minLat: 60, maxLat: 85 },
-      // Antarctica (partial)
-      { minLon: -180, maxLon: 180, minLat: -90, maxLat: -65 }
+    const pixel = map.project(lngLat);
+    const bbox = [
+      [pixel.x - 2, pixel.y - 2],
+      [pixel.x + 2, pixel.y + 2]
     ];
     
-    // Check if point is NOT over major land masses
-    const overLand = landMasses.some(land => 
-      lon >= land.minLon && lon <= land.maxLon && 
-      lat >= land.minLat && lat <= land.maxLat
-    );
+    const features = map.queryRenderedFeatures(bbox, { 
+      layers: waterLayers.map(l => l.id) 
+    });
     
-    // If not clearly over land, assume it's over water
-    return !overLand;
-    
+    return features && features.length > 0;
   } catch (err) {
     console.warn("isPointOverWater error:", err);
-    return true; // Conservative fallback
+    // Fallback to basic coordinate check for ocean areas
+    const [lon, lat] = lngLat;
+    return (lon >= 115 && lon <= 130 && lat >= 2 && lat <= 20);
   }
 }
 
 export async function addTemperatureLayer(map, options = {}) {
-  console.log("Adding global ocean temperature layer...");
+  console.log("Adding enhanced temperature layer...");
   if (!map) return;
 
   if (!map.isStyleLoaded()) {
@@ -249,12 +128,12 @@ export async function addTemperatureLayer(map, options = {}) {
   }
 
   try {
-    // Fetch global ocean temperature data
+    // Fetch temperature data
     const bounds = map.getBounds();
     const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()];
     const data = await fetchTemperatureFromAPI(bbox);
 
-    // Filter to keep only ocean points
+    // Filter points to only show over water/ocean areas
     const filtered = {
       type: "FeatureCollection",
       features: data.features.filter(feature => {
@@ -264,8 +143,7 @@ export async function addTemperatureLayer(map, options = {}) {
       })
     };
 
-    console.log(`Global ocean temperature: ${filtered.features.length} points loaded`);
-    console.log(`Temperature range: ${Math.min(...filtered.features.map(f => f.properties.temp))}°C to ${Math.max(...filtered.features.map(f => f.properties.temp))}°C`);
+    console.log(`Temperature layer: ${filtered.features.length} ocean points loaded`);
 
     // Add/update source
     if (!map.getSource("temperature")) {
@@ -274,7 +152,7 @@ export async function addTemperatureLayer(map, options = {}) {
       map.getSource("temperature").setData(filtered);
     }
 
-    // Global temperature heatmap with extended range
+    // Enhanced heatmap layer (primary visualization)
     if (!map.getLayer("temperature-heat")) {
       map.addLayer({
         id: "temperature-heat",
@@ -282,146 +160,118 @@ export async function addTemperatureLayer(map, options = {}) {
         source: "temperature",
         maxzoom: 12,
         paint: {
-          // Weight based on temperature deviation from global average (~15°C)
+          // Weight based on temperature (higher temps = more intense)
           "heatmap-weight": [
             "interpolate", ["linear"], ["get", "temp"], 
-            -2, 0.2,   // Freezing water
-            5, 0.3,    // Very cold
-            15, 0.6,   // Average
-            25, 0.8,   // Warm
-            35, 1.0    // Very warm
+            26, 0.1,  // Cool temperatures
+            28, 0.5,  // Moderate temperatures  
+            30, 0.8,  // Warm temperatures
+            32, 1.0   // Hot temperatures
           ],
           
-          // Intensity varies with zoom
+          // Intensity increases with zoom
           "heatmap-intensity": [
             "interpolate", ["linear"], ["zoom"], 
-            0, 0.4, 
-            3, 0.8,
-            6, 1.2, 
-            12, 1.8
+            0, 0.6, 
+            6, 1.0, 
+            12, 1.5
           ],
           
-          // Comprehensive temperature color gradient
+          // Enhanced color gradient matching ocean temperature visualization
           "heatmap-color": [
             "interpolate", ["linear"], ["heatmap-density"],
             0, "rgba(0,0,0,0)",           // Transparent
-            0.1, "rgba(25,25,112,0.6)",   // Navy (freezing)
-            0.2, "rgba(0,50,200,0.7)",    // Deep blue (very cold)
-            0.3, "rgba(0,100,255,0.8)",   // Blue (cold)
-            0.4, "rgba(50,150,255,0.8)",  // Light blue (cool)
-            0.5, "rgba(100,255,255,0.8)", // Cyan (moderate)
-            0.6, "rgba(150,255,150,0.8)", // Light green (mild warm)
-            0.7, "rgba(255,255,100,0.8)", // Yellow (warm)
-            0.8, "rgba(255,180,0,0.9)",   // Orange (hot)
-            0.9, "rgba(255,100,50,0.9)",  // Red-orange (very hot)
-            1.0, "rgba(220,20,60,1.0)"    // Crimson (extremely hot)
+            0.1, "rgba(0,50,150,0.6)",    // Deep blue (cold)
+            0.2, "rgba(0,100,200,0.7)",   // Blue
+            0.3, "rgba(0,150,255,0.8)",   // Light blue  
+            0.4, "rgba(50,200,255,0.8)",  // Cyan
+            0.5, "rgba(100,255,200,0.8)", // Light cyan
+            0.6, "rgba(150,255,100,0.8)", // Light green
+            0.7, "rgba(255,255,50,0.8)",  // Yellow
+            0.8, "rgba(255,200,0,0.9)",   // Orange
+            0.9, "rgba(255,100,0,0.9)",   // Red-orange
+            1.0, "rgba(255,0,0,1.0)"      // Red (hot)
           ],
           
-          // Dynamic radius based on zoom
+          // Radius based on zoom level
           "heatmap-radius": [
             "interpolate", ["linear"], ["zoom"],
-            0, 8,    // Small at world view
-            3, 15,   // Medium at regional view
-            6, 25,   // Large at country view
-            12, 45   // Very large at detailed view
+            0, 15,   // Small radius at low zoom
+            6, 25,   // Medium radius at mid zoom  
+            12, 40   // Large radius at high zoom
           ],
           
           "heatmap-opacity": [
             "interpolate", ["linear"], ["zoom"],
-            0, 0.9,
-            8, 0.8,
-            12, 0.6
+            0, 0.9,   // More opaque at low zoom
+            12, 0.7   // Less opaque at high zoom (to see circles)
           ]
         }
       }, getBeforeLayerId(map));
     }
 
-    // Temperature circles for detailed inspection
+    // Circle points for detailed view (visible at higher zooms)
     if (!map.getLayer("temperature-circles")) {
       map.addLayer({
         id: "temperature-circles", 
         type: "circle",
         source: "temperature",
-        minzoom: 8,
+        minzoom: 10,
         paint: {
           "circle-radius": [
             "interpolate", ["linear"], ["zoom"],
-            8, 3,
-            12, 6,
-            16, 10
+            10, 4,   // Small circles at zoom 10
+            15, 8    // Larger circles at zoom 15
           ],
           
-          // Extended temperature color scale
+          // Color based on temperature value
           "circle-color": [
             "interpolate", ["linear"], ["get", "temp"],
-            -2, "#191970",    // Navy (freezing)
-            0, "#0000CD",     // Medium blue (ice cold)
-            5, "#0080FF",     // Blue (very cold)
-            10, "#00BFFF",    // Deep sky blue (cold)
-            15, "#40E0D0",    // Turquoise (cool)
-            20, "#98FB98",    // Pale green (mild)
-            25, "#FFFF00",    // Yellow (warm)
-            27, "#FFA500",    // Orange (hot)
-            30, "#FF6347",    // Tomato (very hot)
-            35, "#DC143C"     // Crimson (extreme)
+            26, "#001f5c",    // Very cold - dark blue
+            27, "#0040a0",    // Cold - blue  
+            28, "#0080ff",    // Cool - light blue
+            29, "#40c0ff",    // Mild - cyan
+            30, "#80ff80",    // Warm - light green
+            31, "#ffff00",    // Hot - yellow
+            32, "#ff8000",    // Very hot - orange
+            33, "#ff0000"     // Extremely hot - red
           ],
           
-          "circle-stroke-width": [
-            "interpolate", ["linear"], ["zoom"],
-            8, 0.5,
-            16, 2
-          ],
+          "circle-stroke-width": 1,
           "circle-stroke-color": "rgba(255,255,255,0.8)",
           "circle-opacity": 0.8
         }
       }, getBeforeLayerId(map));
     }
 
-    // Temperature labels with improved visibility
+    // Temperature labels (visible at very high zoom)
     if (!map.getLayer("temperature-labels")) {
       map.addLayer({
         id: "temperature-labels",
         type: "symbol", 
         source: "temperature",
-        minzoom: 11,
+        minzoom: 13,
         layout: {
-          "text-field": [
-            "case",
-            ["<", ["get", "temp"], 0],
-            ["concat", ["to-string", ["get", "temp"]], "°C ❄️"],
-            ["concat", ["to-string", ["get", "temp"]], "°C"]
-          ],
+          "text-field": ["concat", ["to-string", ["get", "temp"]], "°C"],
           "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
           "text-size": [
             "interpolate", ["linear"], ["zoom"],
-            11, 9,
-            14, 11,
-            18, 14
+            13, 10,
+            16, 12
           ],
-          "text-offset": [0, -1.8],
+          "text-offset": [0, -1.5],
           "text-allow-overlap": false,
-          "text-ignore-placement": false,
-          "symbol-spacing": 100
+          "text-ignore-placement": false
         },
         paint: {
-          "text-color": [
-            "case",
-            ["<", ["get", "temp"], 10], "#FFFFFF",  // White for cold temps
-            ["<", ["get", "temp"], 25], "#000000",  // Black for moderate temps  
-            "#FFFFFF"                               // White for hot temps
-          ],
-          "text-halo-color": [
-            "case",
-            ["<", ["get", "temp"], 10], "rgba(0,0,0,0.9)",     // Dark halo for cold
-            ["<", ["get", "temp"], 25], "rgba(255,255,255,0.9)", // Light halo for moderate
-            "rgba(0,0,0,0.9)"                                   // Dark halo for hot
-          ],
+          "text-color": "#ffffff",
+          "text-halo-color": "rgba(0,0,0,0.8)", 
           "text-halo-width": 2
         }
       }, getBeforeLayerId(map));
     }
 
-    console.log("Global ocean temperature layer added successfully");
+    console.log("Enhanced temperature layer added successfully");
     
   } catch (error) {
     console.error("Failed to add temperature layer:", error);
@@ -433,7 +283,7 @@ function getBeforeLayerId(map) {
   const style = map.getStyle();
   if (!style || !style.layers) return undefined;
   
-  // Insert before first symbol layer to keep labels on top
+  // Insert before first symbol layer (labels, etc.)
   const firstSymbol = style.layers.find(layer => layer.type === "symbol");
   return firstSymbol ? firstSymbol.id : undefined;
 }
@@ -454,7 +304,7 @@ export function removeTemperatureLayer(map) {
       map.removeSource("temperature");
     }
     
-    console.log("Global ocean temperature layer removed successfully");
+    console.log("Temperature layer removed successfully");
   } catch (err) {
     console.warn("Error removing temperature layer:", err);
   }
