@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import api from "../api/api";
+import supabase from "../supabaseClient";
 
 //Component
 import ButtonGray from "../components/ButtonGray";
@@ -26,16 +27,24 @@ export default function CreateAccount() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrors(null)
     try {
-      const response = await api.post("/signup", formData);
-      console.log("Account created:", response.data);
-      alert("Account created successfully!");
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      alert("Account created successfully! Please check your email to confirm.");
     } catch (error) {
-      if (error.response?.status === 422) {
-        setErrors(error.response.data.errors);
-      } else {
-        setErrors("Something went wrong");
-      }
+      setErrors(error.message || "Something went wrong");
     } finally {
       setIsSubmitting(false);
     }

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/api";
+import supabase from "../supabaseClient";
 
 //Component
 import ButtonGray from "../components/ButtonGray";
@@ -22,17 +23,17 @@ export default function SignIn() {
     setErrors(null);
 
     try {
-      const response = await api.post("/signin", formData);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (error) throw error;
+
       alert("Login successful!");
       navigate("/home"); // Redirect after login
     } catch (error) {
-      if (error.response?.status === 401) {
-        setErrors("Invalid email or password");
-      } else if (error.response?.status === 422) {
-        setErrors(Object.values(error.response.data.errors).flat().join(", "));
-      } else {
-        setErrors("Something went wrong");
-      }
+      setErrors(error.message || "Something went wrong");
     } finally {
       setIsSubmitting(false);
     }
