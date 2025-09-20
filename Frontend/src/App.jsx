@@ -1,10 +1,10 @@
-// App.jsx
-import "./styles/App.css";
 import { Route, Routes } from "react-router-dom";
-import Home from "./pages/Home";
-import SignUp from "./pages/SignUp";
 import EditUser from "./pages/EditUser";
-import SignIn from "./pages/SignIn"; // ✅ Import Login page
+import Home from "./pages/Home";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import UserPage from "./pages/UserPage"; // ✅ Import UserPage
+import "./styles/App.css";
 
 function App() {
   return (
@@ -12,7 +12,7 @@ function App() {
       <Routes>
         {/* ✅ Default page should be Login */}
         <Route path="/" element={<SignIn />} />
-        <Route path="/SignIn" element={<SignIn />} />
+        <Route path="/signin" element={<SignIn />} />
 
         {/* Sign Up page */}
         <Route path="/signup" element={<SignUp />} />
@@ -20,6 +20,9 @@ function App() {
         {/* After login, user can access these */}
         <Route path="/home" element={<Home />} />
         <Route path="/edit-user/:id" element={<EditUser />} />
+
+        {/* ✅ New route for UserPage */}
+        <Route path="/userpage" element={<UserPage />} />
       </Routes>
     </>
   );
