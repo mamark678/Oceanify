@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/api";
 import moment from "moment";
+import supabase from "../supabaseClient";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,10 +17,15 @@ export default function Home() {
   const getAllAccounts = async () => {
     setIsLoading(true);
     try {
-      const response = await api.get("/get-all-accounts");
-      setAllAccounts(response.data.allAccounts || []);
+      const { data, error } = await supabase
+        .from("profiles")   // query the profiles table
+        .select("first_name, last_name, email, created_at")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setAllAccounts(data || []);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching accounts:", error.message);
     } finally {
       setIsLoading(false);
     }
@@ -32,12 +38,20 @@ export default function Home() {
 
   const handleConfirmDelete = async () => {
     try {
-      await api.delete(`/account/${deleteId}`);
-      getAllAccounts();
+      const response = await fetch('http://localhost:8000/api/users/${deleteId}', {
+        method: "DELETE",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.error || "Failed to delete user");
+
+      console.log(result.message);
+      getAllAccounts(); // refresh table
       setShowDeleteModal(false);
       setDeleteId(null);
     } catch (error) {
-      console.log("Delete failed:", error.response?.data || error);
+      console.error("Delete failed:", error.message);
     }
   };
 
@@ -58,7 +72,6 @@ export default function Home() {
                 <th className="px-4 py-3 text-left">First Name</th>
                 <th className="px-4 py-3 text-left">Last Name</th>
                 <th className="px-4 py-3 text-left">Email</th>
-                <th className="px-4 py-3 text-left">Password</th>
                 <th className="px-4 py-3 text-left">Created At</th>
                 <th className="px-4 py-3 text-left">Actions</th>
               </tr>
@@ -73,7 +86,6 @@ export default function Home() {
                   <td className="px-4 py-3 ">{item.first_name}</td>
                   <td className="px-4 py-3 ">{item.last_name}</td>
                   <td className="px-4 py-3 ">{item.email}</td>
-                  <td className="px-4 py-3 ">{item.password}</td>
                   <td className="px-4 py-3 ">
                     {moment(item.created_at).format("MMM D, YYYY h:mm A")}
                   </td>

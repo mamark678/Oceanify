@@ -6,8 +6,10 @@ import { temperatureLayer } from "../WeatherServiceLayers/TemperatureLayer";
 import { getWeather } from "../WeatherServiceLayers/WeatherService";
 import { TemperatureHeatmapLayer } from "../WeatherServiceLayers/TemperatureHeatMap";
 import { cities } from "../data/cities";
-import { SeaLevelHeatmapLayer } from "../WeatherServiceLayers/SeaLevelPressureHeatMap";
-
+import {
+  fetchSeaLevelGridPressure,
+  SeaLevelHeatmapLayerFullMap,
+} from "../WeatherServiceLayers/SeaLevelPressureHeatMap";
 export default function MapComponent() {
   const temperatureHeatLayerRef = useRef(null);
   const mapRef = useRef(null);
@@ -37,28 +39,50 @@ export default function MapComponent() {
 
     async function loadHeatmap() {
       try {
-        const promises = cities.map((city) => getWeather(city.lat, city.lon));
-        const results = await Promise.all(promises);
-
-        const cityData = results.map((data, index) => ({
+        // Temperature data (city-based)
+        const tempPromises = cities.map((city) =>
+          getWeather(city.lat, city.lon)
+        );
+        const tempResults = await Promise.all(tempPromises);
+        const cityData = tempResults.map((data, index) => ({
           lat: cities[index].lat,
           lon: cities[index].lon,
-          value: data.temperature_2m ?? 0,
+          value: data.temperature, 
         }));
 
-        // TEMPERATURE
         const temperatureHeatMap = TemperatureHeatmapLayer(cityData);
         temperatureHeatMap.addTo(mapRef.current);
         temperatureHeatLayerRef.current = temperatureHeatMap;
 
-        // SEA LEVEL
-        const seaLevelHeatMap = SeaLevelHeatmapLayer(cityData);
-        seaLevelHeatMap.addTo(mapRef.current);
-        seaLevelPressureHeatLayerRef.current = seaLevelHeatMap;
+        // SEA LEVEL grid points
+        const bounds = map.getBounds();
+        const step = 3;
+        const gridPoints = [];
+        for (
+          let lat = bounds.getSouth();
+          lat <= bounds.getNorth();
+          lat += step
+        ) {
+          for (
+            let lon = bounds.getWest();
+            lon <= bounds.getEast();
+            lon += step
+          ) {
+            gridPoints.push({ lat, lon });
+          }
+        }
+        // Fetch pressure for grid points using the separated function
+        const pressureGrid = await fetchSeaLevelGridPressure(gridPoints);
+
+        const seaLevelHeatMap = SeaLevelHeatmapLayerFullMap(pressureGrid);
+        if (seaLevelHeatMap) {
+          seaLevelHeatMap.addTo(mapRef.current);
+          seaLevelPressureHeatLayerRef.current = seaLevelHeatMap;
+        }
 
         setHeatmapLoaded(true);
       } catch (err) {
-        console.error("Failed to load heatmap:", err);
+        console.error("Failed to load heatmaps:", err);
       }
     }
 
@@ -75,11 +99,11 @@ export default function MapComponent() {
 
       if (userMarker) {
         map.removeLayer(userMarker);
-        map.removeLayer(userCircle);
+        // map.removeLayer(userCircle);
       }
 
       userMarker = L.marker([lat, lng]).addTo(map);
-      userCircle = L.circle([lat, lng], { radius: accuracy }).addTo(map);
+      // userCircle = L.circle([lat, lng], { radius: accuracy }).addTo(map);
       map.setView([lat, lng], 6);
     }
 

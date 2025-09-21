@@ -1,21 +1,23 @@
 export function TemperatureHeatmapLayer(cityData) {
   const temps = cityData
     .map((c) => c.value)
-    .filter((v) => typeof v === "number");
+    .filter((v) => typeof v === "number" && !isNaN(v));
+
+  if (!temps.length) {
+    console.warn("No valid temperature data for heatmap");
+    return null;
+  }
+
   const min = Math.min(...temps);
   const max = Math.max(...temps);
-  console.log("Heatmap city data:", cityData);
+  const range = max - min || 1;
 
   const heatPoints = cityData
-    .filter((c) => typeof c.value === "number")
-    .map((c) => [
-      c.lat,
-      c.lon,
-      (c.value - min) / (max - min || 1), // normalize per dataset
-    ]);
+    .filter((c) => typeof c.value === "number" && !isNaN(c.value))
+    .map((c) => [c.lat, c.lon, (c.value - min) / range]);
 
   return L.heatLayer(heatPoints, {
-    radius: 35, 
+    radius: 35,
     blur: 20,
     maxZoom: 8,
     minOpacity: 0.8,
