@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 export default function UserPage() {
   const mapRef = useRef(null);
   const markerRef = useRef(null);
-  const [activeHeatmap, setActiveHeatmap] = useState("temperature");
   const [loading, setLoading] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [showTemperature, setShowTemperature] = useState(true);
+  const [showPressure, setShowPressure] = useState(false);
 
   useEffect(() => {
     const API_KEY = "60b8ffcce91b8ebdc127d1219e56e0f5";
@@ -105,37 +106,129 @@ export default function UserPage() {
         
         setLoading(true);
 
-        // Use the actual clicked coordinates in the API call
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m&timezone=auto`;
+        // Fetch both weather and wave data
+        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m&timezone=auto`;
+        const waveUrl = `https://api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lng}&current=wave_height,wave_direction,swell_wave_height,swell_wave_direction,secondary_swell_wave_height,secondary_swell_wave_period&timezone=auto`;
 
         try {
-          const response = await fetch(url);
+          const [weatherResponse, waveResponse] = await Promise.all([
+            fetch(weatherUrl),
+            fetch(waveUrl)
+          ]);
           
-          if (!response.ok) {
-            throw new Error(`API request failed: ${response.status}`);
+          if (!weatherResponse.ok) {
+            throw new Error(`Weather API request failed: ${weatherResponse.status}`);
           }
           
-          const data = await response.json();
-          console.log("Weather data received:", data);
+          const weatherData = await weatherResponse.json();
+          console.log("Weather data received:", weatherData);
+
+          // Wave data might not be available for all locations (land areas)
+          let waveData = null;
+          if (waveResponse.ok) {
+            waveData = await waveResponse.json();
+            console.log("Wave data received:", waveData);
+          } else {
+            console.log("Marine API not available for this location");
+          }
 
           // Use current weather data
-          const current = data.current;
-          const temp = current.temperature_2m;
-          const pressure = current.surface_pressure;
-          const windSpeed = current.wind_speed_10m;
-          const windDir = current.wind_direction_10m;
-          const windGust = current.wind_gusts_10m;
+          const current = weatherData.current;
+
+          // Helper function to format values safely
+          const formatValue = (value, unit = '', decimals = 1) => {
+            if (value === null || value === undefined) return 'N/A';
+            if (typeof value === 'number') {
+              return decimals === 0 ? `${Math.round(value)}${unit}` : `${value.toFixed(decimals)}${unit}`;
+            }
+            return `${value}${unit}`;
+          };
+
+          // Helper function to get weather description from code
+          const getWeatherDescription = (code) => {
+            const weatherCodes = {
+              0: "Clear sky",
+              1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+              45: "Fog", 48: "Depositing rime fog",
+              51: "Light drizzle", 53: "Moderate drizzle", 55: "Dense drizzle",
+              56: "Light freezing drizzle", 57: "Dense freezing drizzle",
+              61: "Slight rain", 63: "Moderate rain", 65: "Heavy rain",
+              66: "Light freezing rain", 67: "Heavy freezing rain",
+              71: "Slight snow", 73: "Moderate snow", 75: "Heavy snow",
+              77: "Snow grains",
+              80: "Slight rain showers", 81: "Moderate rain showers", 82: "Violent rain showers",
+              85: "Slight snow showers", 86: "Heavy snow showers",
+              95: "Thunderstorm", 96: "Thunderstorm with slight hail", 99: "Thunderstorm with heavy hail"
+            };
+            return weatherCodes[code] || `Code: ${code}`;
+          };
 
           const popupContent = `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-width: 220px; padding: 4px;">
-              <h4 style="margin: 0 0 12px 0; color: #1a1a1a; font-size: 16px; font-weight: 600;">🌤️ Weather Data</h4>
-              <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; font-size: 14px; line-height: 1.4;">
-                <div style="color: #666;"><strong>Temperature:</strong></div><div style="font-weight: 600; color: #e74c3c;">${temp}°C</div>
-                <div style="color: #666;"><strong>Pressure:</strong></div><div style="font-weight: 600; color: #3498db;">${pressure} hPa</div>
-                <div style="color: #666;"><strong>Wind Speed:</strong></div><div style="font-weight: 600; color: #27ae60;">${windSpeed} m/s</div>
-                <div style="color: #666;"><strong>Wind Direction:</strong></div><div style="font-weight: 600; color: #27ae60;">${windDir}°</div>
-                <div style="color: #666;"><strong>Wind Gusts:</strong></div><div style="font-weight: 600; color: #f39c12;">${windGust} m/s</div>
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-width: 280px; padding: 6px;">
+              <h4 style="margin: 0 0 12px 0; color: #1a1a1a; font-size: 16px; font-weight: 600;">🌤️ Weather ${waveData && waveData.current ? '& Marine' : ''} Data</h4>
+              
+              <!-- Temperature Section -->
+              <div style="margin-bottom: 12px;">
+                <h5 style="margin: 0 0 6px 0; color: #e74c3c; font-size: 14px;">🌡️ Temperature</h5>
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 13px;">
+                  <div style="color: #666;">Temperature:</div><div style="font-weight: 600; color: #e74c3c;">${formatValue(current.temperature_2m, '°C')}</div>
+                  <div style="color: #666;">Feels like:</div><div style="font-weight: 600; color: #e74c3c;">${formatValue(current.apparent_temperature, '°C')}</div>
+                  <div style="color: #666;">Humidity:</div><div style="font-weight: 600; color: #3498db;">${formatValue(current.relative_humidity_2m, '%', 0)}</div>
+                </div>
               </div>
+
+              <!-- Weather Conditions -->
+              <div style="margin-bottom: 12px;">
+                <h5 style="margin: 0 0 6px 0; color: #f39c12; font-size: 14px;">☀️ Conditions</h5>
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 13px;">
+                  <div style="color: #666;">Weather:</div><div style="font-weight: 600; color: #f39c12;">${getWeatherDescription(current.weather_code)}</div>
+                  <div style="color: #666;">Cloud Cover:</div><div style="font-weight: 600; color: #95a5a6;">${formatValue(current.cloud_cover, '%', 0)}</div>
+                  <div style="color: #666;">Day/Night:</div><div style="font-weight: 600; color: #f1c40f;">${current.is_day ? 'Day' : 'Night'}</div>
+                </div>
+              </div>
+
+              <!-- Precipitation -->
+              <div style="margin-bottom: 12px;">
+                <h5 style="margin: 0 0 6px 0; color: #3498db; font-size: 14px;">🌧️ Precipitation</h5>
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 13px;">
+                  <div style="color: #666;">Precipitation:</div><div style="font-weight: 600; color: #3498db;">${formatValue(current.precipitation, ' mm')}</div>
+                </div>
+              </div>
+
+              <!-- Pressure -->
+              <div style="margin-bottom: 12px;">
+                <h5 style="margin: 0 0 6px 0; color: #9b59b6; font-size: 14px;">📊 Pressure</h5>
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 13px;">
+                  <div style="color: #666;">Surface Pressure:</div><div style="font-weight: 600; color: #9b59b6;">${formatValue(current.surface_pressure, ' hPa')}</div>
+                </div>
+              </div>
+
+              <!-- Wind -->
+              <div style="margin-bottom: 12px;">
+                <h5 style="margin: 0 0 6px 0; color: #27ae60; font-size: 14px;">💨 Wind</h5>
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 13px;">
+                  <div style="color: #666;">Wind Speed:</div><div style="font-weight: 600; color: #27ae60;">${formatValue(current.wind_speed_10m, ' km/h')}</div>
+                  <div style="color: #666;">Wind Direction:</div><div style="font-weight: 600; color: #27ae60;">${formatValue(current.wind_direction_10m, '°', 0)}</div>
+                  <div style="color: #666;">Wind Gusts:</div><div style="font-weight: 600; color: #e67e22;">${formatValue(current.wind_gusts_10m, ' km/h')}</div>
+                </div>
+              </div>
+
+              ${waveData && waveData.current ? `
+              <!-- Marine Data -->
+              <div style="margin-bottom: 12px;">
+                <h5 style="margin: 0 0 6px 0; color: #2980b9; font-size: 14px;">🌊 Marine Data</h5>
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 13px;">
+                  <div style="color: #666;">Wave Height:</div><div style="font-weight: 600; color: #2980b9;">${formatValue(waveData.current.wave_height, ' m')}</div>
+                  <div style="color: #666;">Wave Direction:</div><div style="font-weight: 600; color: #2980b9;">${formatValue(waveData.current.wave_direction, '°', 0)}</div>
+                  <div style="color: #666;">Swell Height:</div><div style="font-weight: 600; color: #3498db;">${formatValue(waveData.current.swell_wave_height, ' m')}</div>
+                  <div style="color: #666;">Swell Direction:</div><div style="font-weight: 600; color: #3498db;">${formatValue(waveData.current.swell_wave_direction, '°', 0)}</div>
+                  <div style="color: #666;">Secondary Swell Height:</div><div style="font-weight: 600; color: #5dade2;">${formatValue(waveData.current.secondary_swell_wave_height, ' m')}</div>
+                  <div style="color: #666;">Secondary Swell Period:</div><div style="font-weight: 600; color: #5dade2;">${formatValue(waveData.current.secondary_swell_wave_period, ' s', 0)}</div>
+                </div>
+              </div>
+              ` : ''}
+
+              <!-- Location -->
               <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #eee; font-size: 12px; color: #888;">
                 📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}
               </div>
@@ -143,6 +236,7 @@ export default function UserPage() {
           `;
 
           // Custom marker icon with temperature
+          const temp = current.temperature_2m;
           const weatherIcon = L.divIcon({
             html: `<div style="
               background: linear-gradient(135deg, #ff6b6b, #ee5a52);
@@ -158,7 +252,7 @@ export default function UserPage() {
               border: 3px solid white; 
               box-shadow: 0 3px 10px rgba(0,0,0,0.3);
               cursor: pointer;
-            ">${Math.round(temp)}°</div>`,
+            ">${temp !== null ? Math.round(temp) + '°' : '?'}</div>`,
             iconSize: [32, 32],
             iconAnchor: [16, 16],
             popupAnchor: [0, -16]
@@ -173,7 +267,7 @@ export default function UserPage() {
           markerRef.current = L.marker([lat, lng], { icon: weatherIcon })
             .addTo(map)
             .bindPopup(popupContent, {
-              maxWidth: 280,
+              maxWidth: 320,
               className: 'weather-popup'
             })
             .openPopup();
@@ -234,39 +328,48 @@ export default function UserPage() {
     };
   }, []);
 
-  // Heatmap toggle functions
-  const showTemperatureHeatmap = () => {
+  // Toggle temperature layer on/off
+  const toggleTemperatureLayer = () => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !mapLoaded) return;
 
-    console.log("Switching to temperature heatmap");
-    
-    if (map.hasLayer && map.hasLayer(map.pressureLayer)) {
-      map.removeLayer(map.pressureLayer);
+    if (showTemperature) {
+      // Remove temperature layer
+      if (map.hasLayer && map.hasLayer(map.tempLayer)) {
+        map.removeLayer(map.tempLayer);
+      }
+      setShowTemperature(false);
+      console.log("Temperature layer hidden");
+    } else {
+      // Add temperature layer
+      if (map.tempLayer && (!map.hasLayer || !map.hasLayer(map.tempLayer))) {
+        map.tempLayer.addTo(map);
+      }
+      setShowTemperature(true);
+      console.log("Temperature layer shown");
     }
-    
-    if (map.hasLayer && !map.hasLayer(map.tempLayer)) {
-      map.tempLayer.addTo(map);
-    }
-    
-    setActiveHeatmap("temperature");
   };
 
-  const showPressureHeatmap = () => {
+  // Toggle pressure layer on/off
+  const togglePressureLayer = () => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !mapLoaded) return;
 
-    console.log("Switching to pressure heatmap");
-    
-    if (map.hasLayer && map.hasLayer(map.tempLayer)) {
-      map.removeLayer(map.tempLayer);
+    if (showPressure) {
+      // Remove pressure layer
+      if (map.hasLayer && map.hasLayer(map.pressureLayer)) {
+        map.removeLayer(map.pressureLayer);
+      }
+      setShowPressure(false);
+      console.log("Pressure layer hidden");
+    } else {
+      // Add pressure layer
+      if (map.pressureLayer && (!map.hasLayer || !map.hasLayer(map.pressureLayer))) {
+        map.pressureLayer.addTo(map);
+      }
+      setShowPressure(true);
+      console.log("Pressure layer shown");
     }
-    
-    if (map.hasLayer && !map.hasLayer(map.pressureLayer)) {
-      map.pressureLayer.addTo(map);
-    }
-    
-    setActiveHeatmap("pressure");
   };
 
   const buttonStyle = {
@@ -346,29 +449,29 @@ export default function UserPage() {
         flexDirection: "column"
       }}>
         <button
-          onClick={showTemperatureHeatmap}
+          onClick={toggleTemperatureLayer}
           disabled={!mapLoaded}
           style={{
             ...buttonStyle,
-            background: activeHeatmap === "temperature" 
+            background: showTemperature 
               ? "linear-gradient(135deg, #ff6b6b, #ee5a52)" 
-              : "linear-gradient(135deg, #4facfe, #00f2fe)"
+              : "linear-gradient(135deg, #95a5a6, #7f8c8d)"
           }}
         >
-          🌡️ Temperature
+          🌡️ Temperature {showTemperature ? 'ON' : 'OFF'}
         </button>
 
         <button
-          onClick={showPressureHeatmap}
+          onClick={togglePressureLayer}
           disabled={!mapLoaded}
           style={{
             ...buttonStyle,
-            background: activeHeatmap === "pressure" 
+            background: showPressure 
               ? "linear-gradient(135deg, #ff6b6b, #ee5a52)" 
-              : "linear-gradient(135deg, #4facfe, #00f2fe)"
+              : "linear-gradient(135deg, #95a5a6, #7f8c8d)"
           }}
         >
-          📊 Pressure
+          📊 Pressure {showPressure ? 'ON' : 'OFF'}
         </button>
       </div>
 
@@ -387,7 +490,9 @@ export default function UserPage() {
         lineHeight: 1.5
       }}>
         <div style={{ fontWeight: "600", marginBottom: "8px", fontSize: "16px" }}>💡 How to use:</div>
-        <div>Click anywhere on the map to see current weather details for that location</div>
+        <div>• Click anywhere to see complete weather & wave data</div>
+        <div>• Toggle temperature/pressure layers ON/OFF</div>
+        <div>• Both layers can be shown simultaneously</div>
         {!mapLoaded && (
           <div style={{ marginTop: "8px", fontSize: "12px", opacity: 0.8 }}>
             Map is loading...
