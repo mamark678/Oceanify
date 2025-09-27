@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import api from "../api/api";
 import supabase from "../supabaseClient";
+import { useAuth } from "../contexts/AuthContext";
 
-//Component
+// Component
 import ButtonGray from "../components/ButtonGray";
 
 export default function SignIn() {
@@ -11,6 +11,7 @@ export default function SignIn() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { setUser } = useAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,20 +31,21 @@ export default function SignIn() {
 
       if (error) throw error;
 
-      alert("Login successful to homepage!");
-      navigate("/userpage"); // Redirect after login
+      setUser(data.user); // ✅ Update global auth state
+      navigate("/userpage");
     } catch (error) {
       setErrors(error.message || "Something went wrong");
     } finally {
       setIsSubmitting(false);
     }
   };
-
   return (
-    <div className="flex items-center justify-center w-full h-screen">
+    <div className="flex items-center justify-center w-full h-screen bg-[#323232]">
       {/* Card */}
-      <div className="w-lg  px-5 py-10 rounded-3xl shadow-lg bg-[#292D2E]">
-        <h1 className="mb-10 text-2xl text-center text-white">Sign In</h1>
+      <div className="w-full max-w-md px-8 py-10 rounded-3xl shadow-lg bg-[#292D2E]">
+        <h1 className="mb-8 text-2xl text-center text-white font-bold">
+          Sign In
+        </h1>
 
         {errors && (
           <div className="p-3 mb-4 text-red-700 bg-red-100 rounded">
@@ -52,7 +54,7 @@ export default function SignIn() {
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 gap-5 mb-10">
+          <div className="grid grid-cols-1 gap-5 mb-6">
             <div>
               <label className="block mb-1 text-sm text-white">Email</label>
               <input
@@ -60,7 +62,8 @@ export default function SignIn() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-3 py-2 rounded bg-[#0F1213] text-[#465963] text-sm"
+                className="w-full px-3 py-2 rounded bg-[#0F1213] text-[#FFFFFF] text-sm placeholder-gray-400"
+                placeholder="Enter your email"
                 required
               />
             </div>
@@ -71,23 +74,24 @@ export default function SignIn() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-3 py-2 rounded bg-[#0F1213] text-[#465963] text-sm"
+                className="w-full px-3 py-2 rounded bg-[#0F1213] text-[#FFFFFF] text-sm placeholder-gray-400"
+                placeholder="Enter your password"
                 required
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-5 mt-4">
+          <div className="flex items-center justify-between mt-4">
             <p className="text-sm text-[#465963]">
-              {" "}
-              Dont have an Account?{" "}
+              Don’t have an account?{" "}
               <Link
                 to="/signup"
-                className="text-sm text-blue-200 hover:underline"
+                className="text-blue-400 hover:underline"
               >
-                Signup now
+                Sign Up
               </Link>
             </p>
+
             <ButtonGray
               type="submit"
               className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"

@@ -36,24 +36,44 @@ export default function Home() {
     setShowDeleteModal(true);
   };
 
-  const handleConfirmDelete = async () => {
-    try {
-      const response = await fetch('http://localhost:8000/api/users/${deleteId}', {
-        method: "DELETE",
-      });
+const handleConfirmDelete = async () => {
+  console.log("Deleting ID:", deleteId);
+  try {
+    const response = await fetch(`http://localhost:8000/api/users/${deleteId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        // Add authorization if your Laravel API needs it:
+        // Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
 
-      const result = await response.json();
+    const text = await response.text();
 
-      if (!response.ok) throw new Error(result.error || "Failed to delete user");
+let result;
+try {
+  result = JSON.parse(text);
+} catch {
+  console.error("Server returned non-JSON:", text);
+  throw new Error("Unexpected server response");
+}
 
-      console.log(result.message);
-      getAllAccounts(); // refresh table
-      setShowDeleteModal(false);
-      setDeleteId(null);
-    } catch (error) {
-      console.error("Delete failed:", error.message);
-    }
-  };
+if (!response.ok) {
+  throw new Error(result.error || "Failed to delete user");
+}
+
+console.log(result.message);
+
+
+
+    console.log(result.message);
+    getAllAccounts(); // refresh table
+    setShowDeleteModal(false);
+    setDeleteId(null);
+  } catch (error) {
+    console.error("Delete failed:", error.message);
+  }
+};
 
   return (
     <div className="container px-4 py-6 mx-auto">

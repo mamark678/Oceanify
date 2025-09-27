@@ -1,130 +1,59 @@
 <?php
-
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
+use App\Services\SupabaseService;
 use Illuminate\Http\Request;
-use App\Models\Account;
+use Illuminate\Support\Facades\Http;
 
-class AccountController extends Controller
-{
-    // SignUp
-    public function createAccount(Request $request)
-    {
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name'  => 'required|string|max:255',
-            'email'      => 'required|email|unique:accounts,email',
-            'password'   => 'required|min:6',
-        ]);
+class AccountController extends Controller {
+    protected $supabase;
 
-        $account = new Account;
-        $account->first_name = $request->first_name;
-        $account->last_name  = $request->last_name;
-        $account->email      = $request->email;
-        $account->password   = $request->password; // plain text for demo only
-        $account->save();
-
-        return response()->json([
-            'status' => 200,
-            'msg' => 'Account created successfully!'
-        ]);
+    public function __construct(SupabaseService $supabase) {
+        $this->supabase = $supabase;
     }
 
-    // SignIn
-    public function signIn(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-        $account = Account::where('email', $request->email)->first();
-
-        if (!$account || $request->password !== $account->password) {
-            return response()->json([
-                'status' => 401,
-                'msg' => 'Invalid credentials'
-            ]);
+    public function index() {
+        $accounts = $this->supabase->getAll();
+        
+        // If $accounts is an object, convert to array
+        if (is_object($accounts)) {
+            $accounts = (array) $accounts;
         }
 
-        return response()->json([
-            'status' => 200,
-            'msg' => 'Login successful',
-            'user' => [
-                'id' => $account->id,
-                'first_name' => $account->first_name,
-                'last_name' => $account->last_name,
-                'email' => $account->email,
-                'password' => $account->password // plain text for demo only
-            ]
-        ]);
+        return response()->json($accounts);
     }
 
-    // Get all accounts
-    public function getAllAccounts()
-    {
-        $accounts = Account::all();
-
-        return response()->json([
-            'status' => 200,
-            'allAccounts' => $accounts
-        ]);
+    public function store(Request $request) {
+        return response()->json(
+            $this->supabase->insert($request->only(['first_name', 'last_name', 'email']))
+        );
     }
 
-    //Delete Account
-    public function deleteAccount($id)
-    {
-        $account = Account::find($id);
-        if (!$account) {
-            return response()->json(['status' => 404, 'msg' => 'Account not found']);
-        }
-        $account->delete();
-        return response()->json(['status' => 200, 'msg' => 'Account deleted successfully']);
+    public function update(Request $request, $id) {
+        return response()->json(
+            $this->supabase->update($id, $request->only(['first_name', 'last_name','email']))
+        );
     }
 
-    // Get single account
-    public function getAccount($id)
+    public function destroy($id)
     {
-        $account = Account::find($id);
-        if (!$account) {
-            return response()->json(['status' => 404, 'msg' => 'Account not found']);
+        $url = env('SUPABASE_URL') . '/auth/v1/admin/users/' . $id;
+        \Log::info('Deleting user at URL: ' . $url);
+
+        $response = Http::withHeaders([
+            'apikey' => env('SUPABASE_KEY'),
+            'Authorization' => 'Bearer ' . env('SUPABASE_KEY'),
+            'Content-Type' => 'application/json',
+        ])->delete($url);
+
+        \Log::info('Response status: ' . $response->status());
+        \Log::info('Response body: ' . $response->body());
+
+        if ($response->successful()) {
+            return response()->json(['message' => 'User deleted successfully']);
+        } else {
+            return response()->json(['message' => 'Failed to delete user', 'error' => $response->body()], 500);
         }
-
-        return response()->json([
-            'status' => 200,
-            'account' => $account
-        ]);
-    }
-
-    public function updateAccount(Request $request, $id)
-    {
-        $account = Account::find($id);
-        if (!$account) {
-            return response()->json(['status' => 404, 'msg' => 'Account not found']);
-        }
-
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name'  => 'required|string|max:255',
-            'email'      => 'required|email|unique:accounts,email,' . $id,
-            'password'   => 'nullable|min:6',
-        ]);
-
-        $account->first_name = $request->first_name;
-        $account->last_name  = $request->last_name;
-        $account->email      = $request->email;
-
-       
-        if ($request->password) {
-            $account->password = $request->password; 
-        }
-
-        $account->save();
-
-        return response()->json([
-            'status' => 200,
-            'msg' => 'Account updated successfully',
-            'account' => $account
-        ]);
     }
 }

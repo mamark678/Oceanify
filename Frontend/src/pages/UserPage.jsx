@@ -120,8 +120,15 @@ export default function UserPage() {
         type: 'fill',
         source: 'oceans',
         paint: {
-          'fill-color': '#aee1ff',
-          'fill-opacity': 0.06
+          'fill-color': [
+            'interpolate',
+            ['linear'],
+            ['get', 'value'], // e.g. temperature/wind if attached
+            0, '#08306b',
+            15, '#4292c6',
+            30, '#deebf7'
+          ],
+          'fill-opacity': 0.6
         }
       }, getBeforeLayerId(map));
     }
