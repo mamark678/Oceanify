@@ -42,7 +42,7 @@ const AccountManagementPage = () => {
       <div>
         <h1 className="text-2xl font-bold mb-6">Account Management</h1>
         <button onClick={signOut} className="rounded-md shadow-xl bg-red-500 px-3 py-1 my-2 hover:bg-red-700">Logout</button>
-        <button onClick={() => navigate("/userpage")} className="rounded-md shadow-xl bg-blue-500 px-3 py-1 my-2 hover:bg-blue-700 ml-2">go to map!</button>
+        <button onClick={() => navigate("/userpage")} className="rounded-md shadow-xl bg-blue-500 px-3 py-1 my-2 hover:bg-blue-700 ml-2">Go to Map</button>
       </div>
 
       {/* Create Form */}

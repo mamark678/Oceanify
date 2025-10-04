@@ -1,40 +1,37 @@
+
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import supabase from "../supabaseClient";
+import WaveBackground from "../components/WaveBackground";
 
-// Component
-import ButtonGray from "../components/ButtonGray";
+//Component
+import SignUpButton from "../components/SignUpButton";
 
-export default function SignUp() {
-  const navigate = useNavigate();
+export default function CreateAccount() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
     first_name: "",
     last_name: "",
+    email: "",
+    password: "",
   });
-  const [errors, setErrors] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Input change handler
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Submit signup
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrors(null);
-
-    if (formData.password !== formData.confirmPassword) {
-      setErrors("Passwords do not match");
-      return;
-    }
-
     setIsSubmitting(true);
-
+    setErrors(null);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -47,8 +44,9 @@ export default function SignUp() {
 
       if (error) throw error;
 
-      alert("Sign up successful! Please check your email to confirm your account.");
-      navigate("/signin"); // redirect to login
+      alert(
+        "Account created successfully! Please check your email to confirm."
+      );
     } catch (error) {
       setErrors(error.message || "Something went wrong");
     } finally {
@@ -57,103 +55,167 @@ export default function SignUp() {
   };
 
   return (
-    <div className="flex items-center justify-center w-full h-screen bg-[#323232]">
-      <div className="w-full max-w-md px-8 py-10 rounded-3xl shadow-lg bg-[#292D2E]">
-        <h1 className="mb-8 text-2xl text-center text-white font-bold">
-          Sign Up
+    <div className="relative flex items-center justify-center w-full h-screen">
+      {/* Background */}
+      <div className="absolute inset-0 z-0">
+        <WaveBackground
+          speed={5}
+          scale={1}
+          color="#21115F"
+          noiseIntensity={0}
+          rotation={0}
+          className="index-0"
+        />
+      </div>
+
+      {/* Card */}
+      <div className="relative px-5 py-10 duration-300 shadow-2xl w-sm md:w-lg bg-neutral-800/50 rounded-3xl backdrop-blur-lg">
+        <h1 className="mb-1 text-2xl font-bold text-center text-white">
+          Create Account
         </h1>
+        <p className="mb-10 text-center text-neutral-500 text-md">
+          Enter your details to get started.
+        </p>
 
         {errors && (
-          <div className="p-3 mb-4 text-red-700 bg-red-100 rounded">
-            {errors}
+          <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 border border-red-400 rounded-lg">
+            {typeof errors === "string"
+              ? errors
+              : Object.values(errors).flat().join(", ")}
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 gap-5 mb-6">
-            <div>
-              <label className="block mb-1 text-sm text-white">First Name</label>
-              <input
-                type="text"
-                name="first_name"
-                value={formData.first_name}
-                onChange={handleChange}
-                className="w-full px-3 py-2 rounded bg-[#0F1213] text-white placeholder-gray-400 text-sm"
-                placeholder="Enter your first name"
-                required
-              />
+        <form id="account-form" onSubmit={handleSubmit}>
+          <div className="mb-3">
+            <div className="flex flex-col gap-5 mb-10">
+              {" "}
+              <div className="grid gap-5 grid-cols1 md:grid-cols-2">
+                {/* First Name */}
+                <div>
+                  <label
+                    htmlFor="first_name"
+                    className="block mb-2 text-white text-md"
+                  >
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    id="first_name"
+                    name="first_name"
+                    value={formData.first_name}
+                    onChange={handleChange}
+                    placeholder="John"
+                    className="w-full px-3 py-2 pr-10 rounded text-md bg-neutral-950/50 text-neutral-500"
+                  />
+                </div>
+
+                {/* Last Name */}
+                <div>
+                  <label
+                    htmlFor="last_name"
+                    className="block mb-2 text-white text-md"
+                  >
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    id="last_name"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleChange}
+                    placeholder="Doe"
+                    className="w-full px-3 py-2 pr-10 rounded text-md bg-neutral-950/50 text-neutral-500"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-5">
+                {" "}
+                {/* Email */}
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="block mb-2 text-white text-md"
+                  >
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="example@email.com"
+                    className="w-full px-3 py-2 pr-10 rounded text-md bg-neutral-950/50 text-neutral-500"
+                  />
+                </div>
+                {/* Password */}
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="block mb-2 text-white text-md"
+                  >
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"} // toggle here
+                      id="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Create your password"
+                      className="w-full px-3 py-2 pr-10 rounded text-md bg-neutral-950/50 text-neutral-500"
+                      required
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 flex items-center duration-300 cursor-pointer right-3 text-neutral-500 hover:text-white "
+                    >
+                      {showPassword ? (
+                        // Visible Toggle
+                        <i className="bi bi-eye"></i>
+                      ) : (
+                        // Hidden Toggle
+                        <i className="bi bi-eye-slash"></i>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block mb-1 text-sm text-white">Last Name</label>
-              <input
-                type="text"
-                name="last_name"
-                value={formData.last_name}
-                onChange={handleChange}
-                className="w-full px-3 py-2 rounded bg-[#0F1213] text-white placeholder-gray-400 text-sm"
-                placeholder="Enter your last name"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block mb-1 text-sm text-white">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-3 py-2 rounded bg-[#0F1213] text-white placeholder-gray-400 text-sm"
-                placeholder="Enter your email"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block mb-1 text-sm text-white">Password</label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full px-3 py-2 rounded bg-[#0F1213] text-white placeholder-gray-400 text-sm"
-                placeholder="Enter your password"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block mb-1 text-sm text-white">Confirm Password</label>
-              <input
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="w-full px-3 py-2 rounded bg-[#0F1213] text-white placeholder-gray-400 text-sm"
-                placeholder="Confirm your password"
-                required
-              />
+            {/* Buttons */}
+            <div className="flex flex-col items-center justify-between gap-1 ">
+              {isSubmitting ? (
+                <SignUpButton
+                  type="submit"
+                  className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
+                >
+                  Creating...
+                </SignUpButton>
+              ) : (
+                <SignUpButton
+                  type="submit"
+                  className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
+                >
+                  Sign Up
+                </SignUpButton>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center justify-between mt-4">
-            <p className="text-sm text-[#465963]">
-              Already have an account?{" "}
+          <div className="flex items-center justify-between gap-1 ">
+            <p className="text-sm text-neutral-500">
+              Already Have an Account?{" "}
               <Link
                 to="/signin"
-                className="text-blue-400 hover:underline"
+                className="text-neutral-300 text-md hover:underline"
               >
-                Sign In
+                Sign-In now
               </Link>
             </p>
-
-            <ButtonGray
-              type="submit"
-              className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
-            >
-              {isSubmitting ? "Signing up..." : "Sign Up"}
-            </ButtonGray>
           </div>
         </form>
       </div>

@@ -1,17 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import WaveBackground from "../components/WaveBackground";
 import supabase from "../supabaseClient";
-import { useAuth } from "../contexts/AuthContext";
 
-// Component
-import ButtonGray from "../components/ButtonGray";
+//Component
+import SignInButton from "../components/SignInButton";
 
 export default function SignIn() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { setUser } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,28 +24,44 @@ export default function SignIn() {
     setErrors(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
       if (error) throw error;
 
-      setUser(data.user); // ✅ Update global auth state
-      navigate("/userpage");
+      alert("Login successful to homepage!");
+      navigate("/userpage"); // Redirect after login
     } catch (error) {
       setErrors(error.message || "Something went wrong");
     } finally {
       setIsSubmitting(false);
     }
   };
+
   return (
-    <div className="flex items-center justify-center w-full h-screen bg-[#323232]">
+    <div className="relative flex items-center justify-center w-full h-screen">
+      {/* Background */}
+      <div className="absolute inset-0 z-0">
+        <WaveBackground
+          speed={5}
+          scale={1}
+          color="#21115F"
+          noiseIntensity={0}
+          rotation={0}
+          className="index-0"
+        />
+      </div>
+
       {/* Card */}
-      <div className="w-full max-w-md px-8 py-10 rounded-3xl shadow-lg bg-[#292D2E]">
-        <h1 className="mb-8 text-2xl text-center text-white font-bold">
-          Sign In
+      <div className="relative px-5 py-10 duration-300 shadow-2xl w-sm md:w-lg bg-neutral-800/50 rounded-3xl backdrop-blur-lg">
+        <h1 className="mb-1 text-2xl font-bold text-center text-white">
+          Welcome Back
         </h1>
+        <p className="mb-10 text-center text-neutral-500 text-md">
+          Enter your account to continue.
+        </p>
 
         {errors && (
           <div className="p-3 mb-4 text-red-700 bg-red-100 rounded">
@@ -54,50 +70,68 @@ export default function SignIn() {
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 gap-5 mb-6">
+          <div className="grid grid-cols-1 gap-5 mb-3">
+            {/* Email */}
             <div>
-              <label className="block mb-1 text-sm text-white">Email</label>
+              <label className="block mb-2 text-white text-md">Email</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-3 py-2 rounded bg-[#0F1213] text-[#FFFFFF] text-sm placeholder-gray-400"
-                placeholder="Enter your email"
+                placeholder="example@email.com"
+                className="w-full px-3 py-2 rounded text-md bg-neutral-950/50 text-neutral-500"
                 required
               />
             </div>
+            {/* Password */}
             <div>
-              <label className="block mb-1 text-sm text-white">Password</label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full px-3 py-2 rounded bg-[#0F1213] text-[#FFFFFF] text-sm placeholder-gray-400"
-                placeholder="Enter your password"
-                required
-              />
+              <label className="block mb-2 text-white text-md">Password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Enter Your Password"
+                  className="w-full px-3 py-2 pr-10 rounded text-md bg-neutral-950/50 text-neutral-500"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 flex items-center duration-300 cursor-pointer right-3 text-neutral-500 hover:text-white "
+                >
+                  {showPassword ? (
+                    //Visible Toggle
+                    <i class="bi bi-eye"></i>
+                  ) : (
+                    //Hidden Toggle
+                    <i class="bi bi-eye-slash"></i>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Button */}
+            <div>
+              <SignInButton type="submit" className="mt-5">
+                {isSubmitting ? "Logging in..." : "Sign In"}
+              </SignInButton>
             </div>
           </div>
 
-          <div className="flex items-center justify-between mt-4">
-            <p className="text-sm text-[#465963]">
-              Don’t have an account?{" "}
+          <div className="flex items-center justify-between gap-1 ">
+            <p className="text-sm text-neutral-500">
+              {" "}
+              Dont have an Account?{" "}
               <Link
                 to="/signup"
-                className="text-blue-400 hover:underline"
+                className="text-neutral-300 text-md hover:underline"
               >
-                Sign Up
+                Sign-Up now
               </Link>
             </p>
-
-            <ButtonGray
-              type="submit"
-              className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700"
-            >
-              {isSubmitting ? "Logging in..." : "Sign In"}
-            </ButtonGray>
           </div>
         </form>
       </div>
