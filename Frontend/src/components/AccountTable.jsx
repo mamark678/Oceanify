@@ -10,7 +10,8 @@ const AccountTable = ({ accounts, onEdit, onReload }) => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this account?")) return;
+    if (!window.confirm("Are you sure you want to delete this account?"))
+      return;
 
     try {
       await axios.delete(`http://localhost:8000/api/accounts/${id}`);
@@ -25,22 +26,22 @@ const AccountTable = ({ accounts, onEdit, onReload }) => {
       {accounts.map((acc, index) => (
         <div
           key={acc.id}
-          className="border-3 border-[#7F7F7F] bg-[#323232] grid grid-cols-5 gap-4 items-center text-white rounded-lg shadow p-4 hover:bg-gray-700 my-7"
+          className="border-3 border-[#7F7F7F] bg-[#323232]/50 grid grid-cols-5 gap-4 items-center text-white rounded-lg shadow p-4 hover:bg-gray-700 my-7"
         >
           <div className="font-mono text-gray-300">{index + 1}</div>
           <div>{acc.first_name}</div>
           <div>{acc.last_name}</div>
           <div className="truncate">{acc.email}</div>
-          <div className="flex gap-2 justify-end">
+          <div className="flex justify-end gap-2">
             <button
               onClick={() => onEdit(acc)}
-              className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+              className="px-3 py-1 text-white bg-yellow-500 rounded hover:bg-yellow-600"
             >
               Edit
             </button>
             <button
               onClick={() => handleDelete(acc.id)}
-              className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+              className="px-3 py-1 text-white bg-red-600 rounded hover:bg-red-700"
             >
               Delete
             </button>
@@ -49,7 +50,7 @@ const AccountTable = ({ accounts, onEdit, onReload }) => {
       ))}
 
       {accounts.length === 0 && (
-        <div className="text-center py-4 text-gray-400 bg-gray-800 rounded-lg">
+        <div className="py-4 text-center text-gray-400 bg-gray-800 rounded-lg">
           No accounts found
         </div>
       )}

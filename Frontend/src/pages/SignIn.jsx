@@ -1,8 +1,11 @@
+// React core
 import React, { useState } from "react";
+// Router
 import { useNavigate, Link } from "react-router-dom";
+// Custom components
 import WaveBackground from "../components/WaveBackground";
+// External services / clients
 import supabase from "../supabaseClient";
-
 //Component
 import SignInButton from "../components/SignInButton";
 
@@ -32,6 +35,7 @@ export default function SignIn() {
       if (error) throw error;
 
       alert("Login successful to homepage!");
+      account - management - page;
       navigate("/userpage"); // Redirect after login
     } catch (error) {
       setErrors(error.message || "Something went wrong");

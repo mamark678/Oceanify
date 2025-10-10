@@ -1,9 +1,11 @@
-
+// React core
 import React, { useState } from "react";
+// Router
 import { Link } from "react-router-dom";
+// External services / clients
 import supabase from "../supabaseClient";
+// Custom components
 import WaveBackground from "../components/WaveBackground";
-
 //Component
 import SignUpButton from "../components/SignUpButton";
 
