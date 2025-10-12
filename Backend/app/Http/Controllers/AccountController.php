@@ -39,7 +39,7 @@ class AccountController extends Controller {
     public function destroy($id)
     {
         $url = env('SUPABASE_URL') . '/auth/v1/admin/users/' . $id;
-        \Log::info('Deleting user at URL: ' . $url);
+        // \Log::info('Deleting user at URL: ' . $url);
 
         $response = Http::withHeaders([
             'apikey' => env('SUPABASE_KEY'),
@@ -47,8 +47,8 @@ class AccountController extends Controller {
             'Content-Type' => 'application/json',
         ])->delete($url);
 
-        \Log::info('Response status: ' . $response->status());
-        \Log::info('Response body: ' . $response->body());
+        // \Log::info('Response status: ' . $response->status());
+        // \Log::info('Response body: ' . $response->body());
 
         if ($response->successful()) {
             return response()->json(['message' => 'User deleted successfully']);

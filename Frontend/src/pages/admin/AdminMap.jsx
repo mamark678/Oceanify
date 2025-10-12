@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 // Components
 import Navbar from "../../components/Navbar";
+import MarineVisualizer from "../../marineVisualizer/MarineVisualizer";
+import { createEnhancedPopup } from "../../components/PopupContent";
 
 export default function UserPage() {
   const mapRef = useRef(null);
@@ -14,6 +16,8 @@ export default function UserPage() {
   const [showPressure, setShowPressure] = useState(false);
   const [showStorm, setShowStorm] = useState(false);
   const navigate = useNavigate();
+  const [selectedLat, setSelectedLat] = useState(null);
+  const [selectedLng, setSelectedLng] = useState(null);
 
   // Convert degrees to compass direction
   const degToCompass = (deg) => {
@@ -153,6 +157,8 @@ export default function UserPage() {
       // Map click handler: Open-Meteo + marine data
       map.on("click", async (e) => {
         const { lat, lng } = e.latlng;
+        setSelectedLat(lat);
+        setSelectedLng(lng);
         setLoading(true);
 
         try {
@@ -220,56 +226,15 @@ export default function UserPage() {
               return codes[code] || `Code: ${code}`;
             };
 
-            const popupContent = `
-              <div style="min-width: 280px; font-family: Arial, sans-serif; padding:6px;">
-                <h4 style="margin:0 0 12px 0;">🌤️ Weather ${
-                  waveData?.current ? "& Marine" : ""
-                } Data</h4>
-                <div style="font-size:13px;">
-                  <div><strong>Temperature:</strong> ${formatValue(
-                    current.temperature_2m,
-                    "°C"
-                  )}</div>
-                  <div><strong>Feels like:</strong> ${formatValue(
-                    current.apparent_temperature,
-                    "°C"
-                  )}</div>
-                  <div><strong>Humidity:</strong> ${formatValue(
-                    current.relative_humidity_2m,
-                    "%0"
-                  )}</div>
-                  <div><strong>Weather:</strong> ${getWeatherDescription(
-                    current.weather_code
-                  )}</div>
-                  <div><strong>Cloud Cover:</strong> ${formatValue(
-                    current.cloud_cover,
-                    "%0"
-                  )}</div>
-                  <div><strong>Day/Night:</strong> ${
-                    current.is_day ? "Day" : "Night"
-                  }</div>
-                  <div><strong>Pressure:</strong> ${formatValue(
-                    current.surface_pressure,
-                    " hPa"
-                  )}</div>
-                  <div><strong>Wind:</strong> ${formatValue(
-                    current.wind_speed_10m,
-                    " km/h"
-                  )} (${degToCompass(current.wind_direction_10m)})</div>
-                </div>
-                ${
-                  waveData?.current
-                    ? `<div style="margin-top:8px;"><strong>Marine:</strong> Wave ${formatValue(
-                        waveData.current.wave_height,
-                        " m"
-                      )}</div>`
-                    : ""
-                }
-                <div style="margin-top:8px; font-size:11px; color:#888;">📍 ${lat.toFixed(
-                  4
-                )}, ${lng.toFixed(4)} | Data: Open-Meteo + OpenWeatherMap</div>
-              </div>
-            `;
+            const popupContent = createEnhancedPopup(
+              weatherData,
+              waveData,
+              lat,
+              lng,
+              getWeatherDescription,
+              degToCompass,
+              formatValue
+            );
 
             const weatherIcon = L.divIcon({
               html: `<div style="background: linear-gradient(135deg, #ff6b6b, #ee5a52); color:white; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold; border:3px solid white; box-shadow:0 3px 10px rgba(0,0,0,0.3);">${
@@ -285,7 +250,7 @@ export default function UserPage() {
             markerRef.current = L.marker([lat, lng], { icon: weatherIcon })
               .addTo(map)
               .bindPopup(popupContent, {
-                maxWidth: 320,
+                maxWidth: 400, // Increased to accommodate new design
                 className: "weather-popup",
               })
               .openPopup();
@@ -356,6 +321,7 @@ export default function UserPage() {
           zIndex: 0,
         }}
       />
+      <MarineVisualizer lat={selectedLat} lng={selectedLng} />
 
       {/* Control buttons */}
       <div

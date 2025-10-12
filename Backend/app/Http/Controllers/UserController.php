@@ -10,7 +10,7 @@ class UserController extends Controller
 {
 public function destroy($id)
 {
-    \Log::info("Deleting user: $id");
+    // \Log::info("Deleting user: $id");
     // find local user
     $user = \App\Models\User::find($id);
 

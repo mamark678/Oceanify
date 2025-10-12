@@ -35,8 +35,7 @@ export default function SignIn() {
       if (error) throw error;
 
       alert("Login successful to homepage!");
-      account - management - page;
-      navigate("/userpage"); // Redirect after login
+      navigate("/dashboard"); // Redirect after login
     } catch (error) {
       setErrors(error.message || "Something went wrong");
     } finally {
