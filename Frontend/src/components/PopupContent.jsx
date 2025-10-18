@@ -1,10 +1,11 @@
-import React from 'react';
+// src/components/PopupContent.jsx
 
-// Compact popup content generator
+// Compact popup content generator - Returns HTML STRING, not JSX
 export const createEnhancedPopup = (weatherData, waveData, lat, lng, getWeatherDescription, degToCompass, formatValue) => {
   const { current } = weatherData;
   
-  return (
+  // Return template literal STRING (backticks), NOT JSX
+  return `
     <div style="
       min-width: 260px;
       max-width: 280px;
@@ -18,7 +19,7 @@ export const createEnhancedPopup = (weatherData, waveData, lat, lng, getWeatherD
       border: 1px solid #e2e8f0;
       font-size: 13px;
     ">
-      {/* <!-- Header Section --> */}
+      <!-- Header Section -->
       <div style="
         background: #f8fafc;
         padding: 16px;
@@ -43,9 +44,9 @@ export const createEnhancedPopup = (weatherData, waveData, lat, lng, getWeatherD
         </div>
       </div>
 
-      {/* <!-- Weather Details Grid - Compact --> */}
+      <!-- Weather Details Grid - Compact -->
       <div style="padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        {/* <!-- Wind --> */}
+        <!-- Wind -->
         <div style="text-align: center;">
           <div style="font-size: 18px; margin-bottom: 4px;">💨</div>
           <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; margin-bottom: 2px;">
@@ -56,7 +57,7 @@ export const createEnhancedPopup = (weatherData, waveData, lat, lng, getWeatherD
           </div>
         </div>
 
-        {/* <!-- Humidity --> */}
+        <!-- Humidity -->
         <div style="text-align: center;">
           <div style="font-size: 18px; margin-bottom: 4px;">💧</div>
           <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; margin-bottom: 2px;">
@@ -67,7 +68,7 @@ export const createEnhancedPopup = (weatherData, waveData, lat, lng, getWeatherD
           </div>
         </div>
 
-        {/* <!-- Cloud Cover --> */}
+        <!-- Cloud Cover -->
         <div style="text-align: center;">
           <div style="font-size: 18px; margin-bottom: 4px;">☁️</div>
           <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; margin-bottom: 2px;">
@@ -78,7 +79,7 @@ export const createEnhancedPopup = (weatherData, waveData, lat, lng, getWeatherD
           </div>
         </div>
 
-        {/* <!-- Pressure --> */}
+        <!-- Pressure -->
         <div style="text-align: center;">
           <div style="font-size: 18px; margin-bottom: 4px;">🌡️</div>
           <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; margin-bottom: 2px;">
@@ -90,7 +91,7 @@ export const createEnhancedPopup = (weatherData, waveData, lat, lng, getWeatherD
         </div>
       </div>
 
-      {/* <!-- Footer --> */}
+      <!-- Footer -->
       <div style="
         background: #f1f5f9;
         padding: 12px 16px;
@@ -105,5 +106,5 @@ export const createEnhancedPopup = (weatherData, waveData, lat, lng, getWeatherD
         <span style="color: #94a3b8;">Open-Meteo · OpenWeatherMap</span>
       </div>
     </div>
-  );
+  `;
 };
