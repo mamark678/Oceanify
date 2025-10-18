@@ -1,0 +1,256 @@
+{
+  "ports_of_mindanao": [
+    {
+      "port_name": "Port of Davao",
+      "location": "Davao City, Davao del Sur",
+      "latitude": 7.0589,
+      "longitude": 125.6458,
+      "type": "International Container Port"
+    },
+    {
+      "port_name": "Port of Cagayan de Oro",
+      "location": "Cagayan de Oro City, Misamis Oriental",
+      "latitude": 8.4922,
+      "longitude": 124.6639,
+      "type": "International Container Port"
+    },
+    {
+      "port_name": "Port of General Santos",
+      "location": "General Santos City, South Cotabato",
+      "latitude": 6.0917,
+      "longitude": 125.1806,
+      "type": "International Container Port"
+    },
+    {
+      "port_name": "Port of Zamboanga",
+      "location": "Zamboanga City, Zamboanga del Sur",
+      "latitude": 6.9283,
+      "longitude": 122.0967,
+      "type": "International Port"
+    },
+    {
+      "port_name": "Port of Nasipit",
+      "location": "Nasipit, Agusan del Norte",
+      "latitude": 9.0039,
+      "longitude": 125.355,
+      "type": "Base Port"
+    },
+    {
+      "port_name": "Port of Ozamiz",
+      "location": "Ozamiz City, Misamis Occidental",
+      "latitude": 8.1583,
+      "longitude": 123.8639,
+      "type": "Base Port"
+    },
+    {
+      "port_name": "Port of Iligan",
+      "location": "Iligan City, Lanao del Norte",
+      "latitude": 8.2417,
+      "longitude": 124.2639,
+      "type": "Base Port"
+    },
+    {
+      "port_name": "Port of Dipolog",
+      "location": "Dipolog City, Zamboanga del Norte",
+      "latitude": 8.5958,
+      "longitude": 123.3467,
+      "type": "Base Port"
+    },
+    {
+      "port_name": "Port of Dapitan",
+      "location": "Dapitan City, Zamboanga del Norte",
+      "latitude": 8.6667,
+      "longitude": 123.4389,
+      "type": "Base Port"
+    },
+    {
+      "port_name": "Port of Mukas",
+      "location": "Kolambugan, Lanao del Norte",
+      "latitude": 8.125,
+      "longitude": 123.9139,
+      "type": "Base Port"
+    },
+    {
+      "port_name": "Port of Plaridel",
+      "location": "Plaridel, Misamis Occidental",
+      "latitude": 8.6458,
+      "longitude": 123.7306,
+      "type": "Base Port"
+    },
+    {
+      "port_name": "Port of Benoni",
+      "location": "Mahinog, Camiguin",
+      "latitude": 9.1717,
+      "longitude": 124.7967,
+      "type": "Municipal Port"
+    },
+    {
+      "port_name": "Port of Balbagon",
+      "location": "Mambajao, Camiguin",
+      "latitude": 9.2639,
+      "longitude": 124.7306,
+      "type": "Municipal Port"
+    },
+    {
+      "port_name": "Port of Balingoan",
+      "location": "Balingoan, Misamis Oriental",
+      "latitude": 9.0294,
+      "longitude": 124.8639,
+      "type": "Terminal Port"
+    },
+    {
+      "port_name": "Port of Camiguin (Guinsiliban)",
+      "location": "Guinsiliban, Camiguin",
+      "latitude": 9.1139,
+      "longitude": 124.7967,
+      "type": "Municipal Port"
+    },
+    {
+      "port_name": "Port of Surigao",
+      "location": "Surigao City, Surigao del Norte",
+      "latitude": 9.7967,
+      "longitude": 125.4967,
+      "type": "Base Port"
+    },
+    {
+      "port_name": "Port of Lipata",
+      "location": "Surigao City, Surigao del Norte",
+      "latitude": 9.8039,
+      "longitude": 125.5639,
+      "type": "Base Port"
+    },
+    {
+      "port_name": "Port of Dapa",
+      "location": "Dapa, Surigao del Norte",
+      "latitude": 9.7639,
+      "longitude": 126.0639,
+      "type": "Municipal Port"
+    },
+    {
+      "port_name": "Port of Cantilan",
+      "location": "Cantilan, Surigao del Sur",
+      "latitude": 9.3467,
+      "longitude": 125.9967,
+      "type": "Municipal Port"
+    },
+    {
+      "port_name": "Port of Tandag",
+      "location": "Tandag City, Surigao del Sur",
+      "latitude": 9.08,
+      "longitude": 126.1967,
+      "type": "Municipal Port"
+    },
+    {
+      "port_name": "Port of Bislig",
+      "location": "Bislig City, Surigao del Sur",
+      "latitude": 8.1967,
+      "longitude": 126.3639,
+      "type": "Private Port"
+    },
+    {
+      "port_name": "Port of Mati",
+      "location": "Mati City, Davao Oriental",
+      "latitude": 6.9639,
+      "longitude": 126.2467,
+      "type": "Municipal Port"
+    },
+    {
+      "port_name": "Port of Sasa (Davao)",
+      "location": "Davao City, Davao del Sur",
+      "latitude": 7.1039,
+      "longitude": 125.6467,
+      "type": "Container Terminal"
+    },
+    {
+      "port_name": "Port of Polloc",
+      "location": "Parang, Maguindanao del Norte",
+      "latitude": 7.38,
+      "longitude": 124.28,
+      "type": "Base Port"
+    },
+    {
+      "port_name": "Port of Cotabato",
+      "location": "Cotabato City, Maguindanao del Norte",
+      "latitude": 7.2139,
+      "longitude": 124.2639,
+      "type": "Base Port"
+    },
+    {
+      "port_name": "Port of Glan",
+      "location": "Glan, Sarangani",
+      "latitude": 5.8294,
+      "longitude": 125.2139,
+      "type": "Municipal Port"
+    },
+    {
+      "port_name": "Port of Kiamba",
+      "location": "Kiamba, Sarangani",
+      "latitude": 5.9967,
+      "longitude": 124.63,
+      "type": "Municipal Port"
+    },
+    {
+      "port_name": "Port of Maasim",
+      "location": "Maasim, Sarangani",
+      "latitude": 5.88,
+      "longitude": 125.0139,
+      "type": "Private Port"
+    },
+    {
+      "port_name": "Sibuco Port",
+      "location": "Sibuco, Zamboanga del Norte",
+      "latitude": 7.2967,
+      "longitude": 122.08,
+      "type": "Municipal Port"
+    },
+    {
+      "port_name": "Port of Siocon",
+      "location": "Siocon, Zamboanga del Norte",
+      "latitude": 7.7139,
+      "longitude": 122.1467,
+      "type": "Municipal Port"
+    },
+    {
+      "port_name": "Port of Jagna",
+      "location": "Jagna, Bohol",
+      "latitude": 9.6539,
+      "longitude": 124.38,
+      "type": "Terminal Port"
+    },
+    {
+      "port_name": "Port of Tagbilaran",
+      "location": "Tagbilaran City, Bohol",
+      "latitude": 9.6539,
+      "longitude": 123.8639,
+      "type": "Base Port"
+    },
+    {
+      "port_name": "Port of Tubigon",
+      "location": "Tubigon, Bohol",
+      "latitude": 9.9639,
+      "longitude": 123.98,
+      "type": "Terminal Port"
+    },
+    {
+      "port_name": "Port of Larena",
+      "location": "Siquijor, Siquijor",
+      "latitude": 9.2639,
+      "longitude": 123.6139,
+      "type": "Terminal Port"
+    },
+    {
+      "port_name": "Port of Siquijor",
+      "location": "Siquijor, Siquijor",
+      "latitude": 9.2139,
+      "longitude": 123.53,
+      "type": "Municipal Port"
+    },
+    {
+      "port_name": "Port of Maasin",
+      "location": "Maasin City, Southern Leyte",
+      "latitude": 10.1467,
+      "longitude": 124.8639,
+      "type": "Terminal Port"
+    }
+  ]
+}

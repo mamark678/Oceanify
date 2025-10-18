@@ -1,10 +1,17 @@
-// src/components/PopupContent.jsx
+import React from "react";
 
-// Compact popup content generator - Returns HTML STRING, not JSX
-export const createEnhancedPopup = (weatherData, waveData, lat, lng, getWeatherDescription, degToCompass, formatValue) => {
+// Compact popup content generator
+export const createEnhancedPopup = (
+  weatherData,
+  waveData,
+  lat,
+  lng,
+  getWeatherDescription,
+  degToCompass,
+  formatValue
+) => {
   const { current } = weatherData;
-  
-  // Return template literal STRING (backticks), NOT JSX
+
   return `
     <div style="
       min-width: 260px;
@@ -32,15 +39,15 @@ export const createEnhancedPopup = (weatherData, waveData, lat, lng, getWeatherD
         
         <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px;">
           <div style="font-size: 32px; line-height: 1;">
-            ${current.is_day ? '☀️' : '🌙'}
+            ${current.is_day ? "☀️" : "🌙"}
           </div>
           <div style="font-size: 32px; font-weight: 300; line-height: 1; color: #1e293b;">
-            ${formatValue(current.temperature_2m, '°', 0)}
+            ${formatValue(current.temperature_2m, "°", 0)}
           </div>
         </div>
         
         <div style="font-size: 12px; color: #64748b; font-weight: 500;">
-          Feels like ${formatValue(current.apparent_temperature, '°', 0)}
+          Feels like ${formatValue(current.apparent_temperature, "°", 0)}
         </div>
       </div>
 
@@ -53,7 +60,7 @@ export const createEnhancedPopup = (weatherData, waveData, lat, lng, getWeatherD
             Wind
           </div>
           <div style="font-size: 14px; font-weight: 600; color: #1e293b;">
-            ${formatValue(current.wind_speed_10m, '', 0)} km/h
+            ${formatValue(current.wind_speed_10m, "", 0)} km/h
           </div>
         </div>
 
@@ -64,7 +71,7 @@ export const createEnhancedPopup = (weatherData, waveData, lat, lng, getWeatherD
             Humidity
           </div>
           <div style="font-size: 14px; font-weight: 600; color: #1e293b;">
-            ${formatValue(current.relative_humidity_2m, '%', 0)}
+            ${formatValue(current.relative_humidity_2m, "%", 0)}
           </div>
         </div>
 
@@ -75,7 +82,7 @@ export const createEnhancedPopup = (weatherData, waveData, lat, lng, getWeatherD
             Clouds
           </div>
           <div style="font-size: 14px; font-weight: 600; color: #1e293b;">
-            ${formatValue(current.cloud_cover, '%', 0)}
+            ${formatValue(current.cloud_cover, "%", 0)}
           </div>
         </div>
 
@@ -86,7 +93,7 @@ export const createEnhancedPopup = (weatherData, waveData, lat, lng, getWeatherD
             Pressure
           </div>
           <div style="font-size: 12px; font-weight: 600; color: #1e293b;">
-            ${formatValue(current.surface_pressure, ' hPa', 0)}
+            ${formatValue(current.surface_pressure, " hPa", 0)}
           </div>
         </div>
       </div>
@@ -102,7 +109,9 @@ export const createEnhancedPopup = (weatherData, waveData, lat, lng, getWeatherD
         font-weight: 500;
         border-top: 1px solid #e2e8f0;
       ">
-        <div style="margin-bottom: 2px;">📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}</div>
+        <div style="margin-bottom: 2px;">📍 ${lat.toFixed(4)}, ${lng.toFixed(
+    4
+  )}</div>
         <span style="color: #94a3b8;">Open-Meteo · OpenWeatherMap</span>
       </div>
     </div>

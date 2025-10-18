@@ -15,14 +15,11 @@ return [
     |
     */
 
-    'paths' => ['api/*'],
+   'paths' => ['api/*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
-        'http://localhost:5173', // React dev server
-        'http://127.0.0.1:5173', // sometimes vite runs on 127.0.0.1
-    ],
+    'allowed_origins' => ['http://localhost:5173'],
 
     'allowed_origins_patterns' => [],
 
@@ -32,6 +29,5 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => true,
-
+    'supports_credentials' => false,
 ];

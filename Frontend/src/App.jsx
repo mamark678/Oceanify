@@ -10,6 +10,7 @@ import AccountMGMT from "./pages/admin/AccountMGMT";
 import AdminMap from "./pages/admin/AdminMap";
 import Dashboard from "./pages/admin/Dashboard";
 import AlertMGMT from "./pages/admin/AlertMGMT";
+import UserMap from "./pages/user/UserMap";
 
 function App() {
   return (
@@ -33,6 +34,12 @@ function App() {
       <Route path="/accounts-management" element={<AccountMGMT />} />
       <Route path="/alerts-management" element={<AlertMGMT />} />
       <Route path="/map" element={<AdminMap />} />
+
+      {/* -----------------------------
+          Internal / User Page
+          (Accessible to everyone in unsecured version)
+      ----------------------------- */}
+      <Route path="/user/home" element={<UserMap />} />
 
       {/* -----------------------------
           Catch-all Route

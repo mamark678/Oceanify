@@ -37,7 +37,7 @@ export function drawMarineCanvasEffect(canvas, data) {
   }
   if (pressure && pressure < 995) {
     const pressureEffect = (995 - pressure) / 20;
-    stormIntensity *= (1 + pressureEffect * 0.3);
+    stormIntensity *= 1 + pressureEffect * 0.3;
     const swirl = (Math.PI / 8) * pressureEffect;
     windDir -= swirl;
     windSpeed *= stormIntensity;
@@ -45,8 +45,11 @@ export function drawMarineCanvasEffect(canvas, data) {
 
   // 🌬️ WIND PARTICLE SYSTEM
   const windParticleCount = Math.min(150, 30 + Math.round(windSpeed * 3));
-  
-  if (windParticles.length === 0 || windParticles.length !== windParticleCount) {
+
+  if (
+    windParticles.length === 0 ||
+    windParticles.length !== windParticleCount
+  ) {
     windParticles = Array.from({ length: windParticleCount }, () => ({
       x: Math.random() * W,
       y: Math.random() * H, // Use full canvas height for wind
@@ -72,13 +75,13 @@ export function drawMarineCanvasEffect(canvas, data) {
       // Base wind movement
       p.x += Math.cos(p.dir) * p.speed + windDriftX;
       p.y += Math.sin(p.dir) * p.speed + windDriftY;
-      
+
       // Storm turbulence
       if (stormIntensity > 1) {
         p.x += (Math.random() - 0.5) * p.turbulence * stormIntensity * 0.5;
         p.y += (Math.random() - 0.5) * p.turbulence * stormIntensity * 0.5;
       }
-      
+
       // Gentle vertical variation for more natural wind flow
       p.y += Math.sin(time * 3 + p.x * 0.01) * 0.1;
 
@@ -92,15 +95,15 @@ export function drawMarineCanvasEffect(canvas, data) {
       ctx.save();
       ctx.globalAlpha = p.opacity;
       ctx.beginPath();
-      
+
       // Draw as streak in wind direction - longer streaks for stronger wind
-      const streakLength = 4 + (windSpeed / 20);
+      const streakLength = 4 + windSpeed / 20;
       ctx.moveTo(p.x, p.y);
       ctx.lineTo(
-        p.x - Math.cos(p.dir) * streakLength, 
+        p.x - Math.cos(p.dir) * streakLength,
         p.y - Math.sin(p.dir) * streakLength
       );
-      
+
       ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
       ctx.lineWidth = p.size;
       ctx.lineCap = "round";
@@ -112,7 +115,7 @@ export function drawMarineCanvasEffect(canvas, data) {
     ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
     ctx.font = "12px Arial";
     ctx.fillText(`Wind: ${windSpeed.toFixed(1)} knots`, 10, 20);
-    
+
     animationId = requestAnimationFrame(animate);
   }
 

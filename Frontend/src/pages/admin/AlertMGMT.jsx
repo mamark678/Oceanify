@@ -39,7 +39,7 @@ export default function AlertMGMT() {
           id: Date.now(),
           message: `⚠️ Auto Alert: Storm intensity ${randomStormLevel} detected at sea.`,
           type: "auto",
-          time: new Date().toLocaleString(),
+          time: new Date().toISOString(),
         };
         setAlertList((prev) => [autoAlert, ...prev]);
       }
@@ -48,31 +48,53 @@ export default function AlertMGMT() {
   }, []);
 
   // 🔹 Send or update alert
-  const handleSendAlert = () => {
+  const handleSendAlert = async () => {
     if (!alertMsg.trim()) return;
 
+    const newAlert = {
+      message: alertMsg,
+      type: "custom",
+      time: new Date().toISOString().slice(0, 19).replace("T", " "),
+      // e.g., "2025-10-18 20:58:19"
+    };
+
     if (editingId) {
-      // Update existing alert
+      // Update existing alert locally
       setAlertList((prev) =>
         prev.map((alert) =>
           alert.id === editingId
-            ? { ...alert, message: alertMsg, time: new Date().toLocaleString() }
+            ? { ...alert, message: alertMsg, time: new Date().toISOString() }
             : alert
         )
       );
       setEditingId(null);
-    } else {
-      // Add new alert
-      const newAlert = {
-        id: Date.now(),
-        message: alertMsg,
-        type: "custom",
-        time: new Date().toLocaleString(),
-      };
-      setAlertList([newAlert, ...alertList]);
+      setAlertMsg("");
+      return;
     }
 
-    setAlertMsg("");
+    try {
+      // Send POST request to Laravel backend
+      const response = await fetch("http://127.0.0.1:8000/api/alerts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newAlert),
+      });
+
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+
+      const savedAlert = await response.json();
+      // Laravel should return the saved alert object including an id
+      setAlertList((prev) => [savedAlert, ...prev]);
+      setAlertMsg("");
+    } catch (err) {
+      console.error("Failed to save alert:", err);
+      // fallback: still add locally if backend fails
+      setAlertList((prev) => [{ ...newAlert, id: Date.now() }, ...prev]);
+      setAlertMsg("");
+    }
   };
 
   // 🔹 Select predefined message
@@ -99,15 +121,15 @@ export default function AlertMGMT() {
       <div className="flex justify-end p-4">
         <button
           onClick={toggleTheme}
-          className="px-4 py-2 text-sm rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-100"
+          className="px-4 py-2 text-sm text-gray-800 bg-gray-200 rounded-lg hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-100"
         >
           Toggle {theme === "dark" ? "Light" : "Dark"} Mode
         </button>
       </div>
 
       <div className="flex flex-col items-center justify-center py-6">
-        <h1 className="text-3xl font-bold mb-2">Alert Management</h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
+        <h1 className="mb-2 text-3xl font-bold">Alert Management</h1>
+        <p className="mb-6 text-gray-600 dark:text-gray-400">
           Send, edit, or manage alerts for seafarers
         </p>
 
@@ -166,22 +188,22 @@ export default function AlertMGMT() {
                 }`}
               >
                 <p className="font-medium break-words">{alert.message}</p>
-                <small className="text-gray-600 dark:text-gray-300 mt-1">
+                <small className="mt-1 text-gray-600 dark:text-gray-300">
                   {alert.time} ({alert.type})
                 </small>
 
                 {/* Edit/Delete Buttons */}
                 {alert.type !== "auto" && (
-                  <div className="mt-3 flex gap-2">
+                  <div className="flex gap-2 mt-3">
                     <button
                       onClick={() => handleEditAlert(alert)}
-                      className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-1 rounded-md text-sm transition-colors"
+                      className="flex-1 py-1 text-sm text-white transition-colors bg-yellow-500 rounded-md hover:bg-yellow-600"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDeleteAlert(alert.id)}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white py-1 rounded-md text-sm transition-colors"
+                      className="flex-1 py-1 text-sm text-white transition-colors bg-red-500 rounded-md hover:bg-red-600"
                     >
                       Delete
                     </button>
