@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 // Components
 import Navbar from "../../components/Navbar";
-import MarineVisualizer from "../../marineVisualizer/MarineVisualizer";
 import { createEnhancedPopup } from "../../components/PopupContent";
+import MarineVisualizer from "../../marineVisualizer/MarineVisualizer";
 // Ports data
 import mindanaoPorts from "../../data/ports.json";
 

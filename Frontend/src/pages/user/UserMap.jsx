@@ -1,6 +1,6 @@
 // src/pages/User/UserPage.jsx
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { createEnhancedPopup } from "../../components/PopupContent";
 import MarineVisualizer from "../../marineVisualizer/MarineVisualizer";
 
@@ -16,13 +16,11 @@ export default function UserPage() {
   const navigate = useNavigate();
   const [selectedLat, setSelectedLat] = useState(null);
   const [selectedLng, setSelectedLng] = useState(null);
-
+  const [userLocation, setUserLocation] = useState(null);
   // Rescue button states
-  const [showRescueConfirm, setShowRescueConfirm] = useState(false);
-  const [rescueCountdown, setRescueCountdown] = useState(10);
-  const [rescuePendingLocation, setRescuePendingLocation] = useState(null);
-  const [rescuePendingReason, setRescuePendingReason] = useState(null);
   const [rescueActive, setRescueActive] = useState(false);
+  const location = useLocation();
+  const rescueLocation = location.state?.rescueLocation;
 
   // Alerts
   const [alerts, setAlerts] = useState([]);
@@ -65,126 +63,100 @@ export default function UserPage() {
      Rescue flow functions
      ----------------------- */
 
-  const requestRescueAt = (lat, lng, reason = "Unknown") => {
-    setRescuePendingLocation({ lat, lng });
-    setRescuePendingReason(reason);
-    setRescueCountdown(10);
-    setShowRescueConfirm(true);
-  };
+const sendRescueRequest = async (lat, lng) => {
+  setRescueActive(true);
 
-  const confirmRescue = async (
-    overrideLocation = null,
-    overrideReason = null
-  ) => {
-    const loc = overrideLocation || rescuePendingLocation;
-    const reason = overrideReason || rescuePendingReason || "Unknown";
+  try {
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation&timezone=auto&wind_speed_unit=kmh&precipitation_unit=mm`;
+    const waveUrl = `https://api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lng}&current=wave_height,wave_direction&timezone=auto`;
 
-    if (!loc) {
-      alert("No location selected for rescue.");
-      setShowRescueConfirm(false);
-      return;
-    }
+    const [weatherRes, waveRes] = await Promise.all([
+      fetch(weatherUrl),
+      fetch(waveUrl),
+    ]);
 
-    setShowRescueConfirm(false);
-    setRescueActive(true);
+    const weatherData = weatherRes.ok ? await weatherRes.json() : null;
+    const waveData = waveRes.ok ? await waveRes.json() : null;
 
+    const emergencyData = {
+      timestamp: new Date().toISOString(),
+      latitude: lat,
+      longitude: lng,
+      reason: "Emergency rescue requested",
+      weather: weatherData?.current || {},
+      marine: waveData?.current || {},
+    };
+
+    // Try to send to backend
     try {
-      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lng}&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,precipitation&timezone=auto&wind_speed_unit=kmh&precipitation_unit=mm`;
-      const waveUrl = `https://api.open-meteo.com/v1/marine?latitude=${loc.lat}&longitude=${loc.lng}&current=wave_height,wave_direction&timezone=auto`;
-
-      const [weatherRes, waveRes] = await Promise.all([
-        fetch(weatherUrl),
-        fetch(waveUrl),
-      ]);
-
-      const weatherData = weatherRes.ok ? await weatherRes.json() : null;
-      const waveData = waveRes.ok ? await waveRes.json() : null;
-
-      const emergencyData = {
-        timestamp: new Date().toISOString(),
-        latitude: loc.lat,
-        longitude: loc.lng,
-        reason,
-        weather: weatherData?.current || {},
-        marine: waveData?.current || {},
-        note: "client-side rescue request (logged locally)",
-      };
-
-      let backendOk = false;
-      try {
-        const resp = await fetch("/api/emergency", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(emergencyData),
-        });
-        if (resp.ok) backendOk = true;
-      } catch (err) {
-        console.warn("Backend unreachable. Falling back to local log.", err);
-      }
-
-      // Place SOS marker on map
-      if (mapRef.current && window.L) {
-        const L = window.L;
-        const sosIcon = L.divIcon({
-          html: `<div class="sos-icon">🆘</div>`,
-          iconSize: [56, 56],
-          iconAnchor: [28, 28],
-        });
-
-        L.marker([loc.lat, loc.lng], { icon: sosIcon })
-          .addTo(mapRef.current)
-          .bindPopup(
-            `<div class="p-3 bg-gradient-to-br from-red-900/90 to-orange-900/70 rounded-xl border border-red-500/30 backdrop-blur-sm">
-              <b class="text-white">🆘 EMERGENCY</b><br/>
-              <span class="text-red-200">Reason: ${reason}</span><br/>
-              <span class="text-blue-200 text-sm">${new Date().toLocaleString()}</span>
-            </div>`
-          )
-          .openPopup();
-      }
-
-      // Save locally
-      try {
-        const logs = JSON.parse(localStorage.getItem("rescueLogs") || "[]");
-        logs.unshift({
-          ...emergencyData,
-          persistedAt: new Date().toISOString(),
-          backendOk,
-        });
-        localStorage.setItem("rescueLogs", JSON.stringify(logs));
-      } catch (err) {
-        console.warn("Failed to persist rescue log", err);
-      }
-
-      console.log("Rescue event logged:", { ...emergencyData, backendOk });
-      alert(
-        "🆘 Rescue request recorded. Admin has been notified (or saved locally)."
-      );
-
-      setTimeout(() => setRescueActive(false), 10000);
+      await fetch("/api/emergency", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(emergencyData),
+      });
     } catch (err) {
-      console.error("confirmRescue error:", err);
-      alert("Failed to send rescue request — saved locally.");
-      setRescueActive(false);
+      console.warn("Backend unreachable", err);
     }
-  };
 
-  const cancelRescue = () => {
-    setShowRescueConfirm(false);
-    setRescueCountdown(10);
-    setRescuePendingLocation(null);
-    setRescuePendingReason(null);
-  };
+    // Place SOS marker
+    if (mapRef.current && window.L) {
+      const L = window.L;
+      const sosIcon = L.divIcon({
+        html: `<div class="sos-icon">🆘</div>`,
+        iconSize: [56, 56],
+        iconAnchor: [28, 28],
+      });
 
-  // Countdown effect
-  useEffect(() => {
-    if (showRescueConfirm && rescueCountdown > 0) {
-      const t = setTimeout(() => setRescueCountdown((c) => c - 1), 1000);
-      return () => clearTimeout(t);
-    } else if (showRescueConfirm && rescueCountdown === 0) {
-      confirmRescue();
+      L.marker([lat, lng], { icon: sosIcon })
+        .addTo(mapRef.current)
+        .bindPopup(
+          `<div class="p-3 bg-gradient-to-br from-red-900/90 to-orange-900/70 rounded-xl border border-red-500/30 backdrop-blur-sm">
+            <b class="text-white">🆘 RESCUE NEEDED</b><br/>
+            <span class="text-red-200">Location requires assistance</span><br/>
+            <span class="text-blue-200 text-sm">${new Date().toLocaleString()}</span>
+          </div>`
+        )
+        .openPopup();
     }
-  }, [showRescueConfirm, rescueCountdown]);
+
+    // Save locally for both rescue logs and admin notifications
+try {
+  // Save to rescue logs
+  const logs = JSON.parse(localStorage.getItem("rescueLogs") || "[]");
+  logs.unshift({ ...emergencyData, persistedAt: new Date().toISOString() });
+  localStorage.setItem("rescueLogs", JSON.stringify(logs));
+
+  // Save to admin notifications
+  const notifications = JSON.parse(localStorage.getItem("rescueNotifications") || "[]");
+  const notification = {
+    id: Date.now(),
+    message: `🆘 Emergency rescue request at ${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E`,
+    latitude: lat,
+    longitude: lng,
+    timestamp: new Date().toISOString(),
+    weatherConditions: {
+      temperature: emergencyData.weather.temperature_2m,
+      windSpeed: emergencyData.weather.wind_speed_10m,
+      waveHeight: emergencyData.marine.wave_height,
+    },
+    status: "pending",
+    read: false,
+  };
+  notifications.unshift(notification);
+  localStorage.setItem("rescueNotifications", JSON.stringify(notifications));
+} catch (err) {
+  console.warn("Failed to persist rescue log", err);
+}
+
+    alert("🆘 This location has clicked the rescue button. Help is on the way!");
+
+    setTimeout(() => setRescueActive(false), 10000);
+  } catch (err) {
+    console.error("Rescue request error:", err);
+    alert("Failed to send rescue request — saved locally.");
+    setRescueActive(false);
+  }
+};
 
   /* -----------------------
      Map init + storm scanning
@@ -420,10 +392,163 @@ export default function UserPage() {
       map.windLayer = windLayer;
 
       setMapLoaded(true);
+      if (rescueLocation) {
+    const { lat, lng } = rescueLocation;
+    
+    // Create SOS marker at rescue location
+    const sosIcon = L.divIcon({
+      html: `<div style="
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: bold;
+        border: 4px solid white;
+        box-shadow: 0 4px 12px rgba(231, 76, 60, 0.5);
+        animation: pulse 2s infinite;
+      ">🆘</div>`,
+      iconSize: [48, 48],
+      iconAnchor: [24, 24],
+    });
+
+    const rescueMarker = L.marker([lat, lng], { icon: sosIcon })
+      .addTo(map)
+      .bindPopup(`
+        <div style="min-width: 240px; padding: 16px;">
+          <h3 style="margin: 0 0 8px 0; color: #e74c3c; font-size: 18px; font-weight: bold;">
+            🆘 Rescue Location
+          </h3>
+          <div style="color: #7f8c8d; font-size: 12px; margin-bottom: 12px;">
+            ${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E
+          </div>
+          <div style="background: #fee; padding: 8px; border-radius: 6px; margin-bottom: 12px;">
+            <div style="color: #c0392b; font-size: 12px; font-weight: bold;">
+              Emergency Assistance Requested
+            </div>
+          </div>
+          <button 
+            onclick="window.loadRescueWeather(${lat}, ${lng})"
+            style="
+              width: 100%;
+              padding: 10px;
+              background: linear-gradient(135deg, #3498db, #2980b9);
+              color: white;
+              border: none;
+              border-radius: 8px;
+              cursor: pointer;
+              font-size: 12px;
+              font-weight: 600;
+            "
+          >
+            Load Weather Conditions
+          </button>
+        </div>
+      `)
+      .openPopup();
+
+    // Zoom to rescue location
+    map.setView([lat, lng], 12);
+
+    // Store marker reference
+    markerRef.current = rescueMarker;
+
+    // Add pulse animation style
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Add global function to load weather
+    window.loadRescueWeather = async (lat, lng) => {
+      setSelectedLat(lat);
+      setSelectedLng(lng);
+      setLoading(true);
+
+      try {
+        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m&timezone=auto&wind_speed_unit=kmh&precipitation_unit=mm`;
+        const waveUrl = `https://api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lng}&current=wave_height,wave_direction,swell_wave_height&timezone=auto`;
+
+        const [weatherResponse, waveResponse] = await Promise.all([
+          fetch(weatherUrl),
+          fetch(waveUrl),
+        ]);
+        
+        const weatherData = weatherResponse.ok ? await weatherResponse.json() : null;
+        const waveData = waveResponse.ok ? await waveResponse.json() : null;
+
+        if (weatherData?.current) {
+          const formatValue = (value, unit = "", decimals = 1) =>
+            value == null ? "N/A" : typeof value === "number"
+              ? decimals === 0 ? `${Math.round(value)}${unit}` : `${value.toFixed(decimals)}${unit}`
+              : `${value}${unit}`;
+
+          const getWeatherDescription = (code) => {
+            const codes = {
+              0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
+              45: "Fog", 51: "Light drizzle", 61: "Slight rain", 63: "Moderate rain",
+              65: "Heavy rain", 80: "Rain showers", 95: "Thunderstorm"
+            };
+            return codes[code] || `Code: ${code}`;
+          };
+
+          const popupContent = createEnhancedPopup(
+            weatherData, waveData, lat, lng,
+            getWeatherDescription, degToCompass, formatValue
+          );
+
+          rescueMarker.setPopupContent(popupContent).openPopup();
+        }
+      } catch (err) {
+        console.error("Failed to load weather:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+  } else {
+    // Original geolocation code (only if no rescue location)
+    navigator.geolocation.getCurrentPosition(
+      ({ coords: { latitude, longitude } }) => {
+        setUserLocation({ lat: latitude, lng: longitude });
+        
+        const userIcon = L.divIcon({
+          html: `<div class="user-location-marker"></div>`,
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
+        });
+        L.marker([latitude, longitude], { icon: userIcon }).addTo(map)
+          .bindPopup(`
+            <div class="p-3 bg-gradient-to-br from-blue-900/90 to-purple-900/70 rounded-xl border border-blue-500/30 backdrop-blur-sm">
+              <div class="text-white font-bold flex items-center gap-2">
+                <span>📍</span>
+                Your Location
+              </div>
+              <div class="text-blue-200 text-sm mt-1">
+                ${latitude.toFixed(4)}°N, ${longitude.toFixed(4)}°E
+              </div>
+            </div>
+          `);
+        map.setView([latitude, longitude], 7);
+      },
+      (err) => console.warn("Geolocation error:", err),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
 
       // Center on user if available
       navigator.geolocation.getCurrentPosition(
         ({ coords: { latitude, longitude } }) => {
+          // Save user location
+          setUserLocation({ lat: latitude, lng: longitude });
+          
           const userIcon = L.divIcon({
             html: `<div class="user-location-marker"></div>`,
             iconSize: [20, 20],
@@ -518,16 +643,6 @@ export default function UserPage() {
               formatValue
             );
 
-            // Add rescue buttons to popup
-            const customButtons = `
-              <div class="mt-3 flex gap-2">
-                <button class="custom-rescue-btn flex-1 px-3 py-2 rounded-lg bg-gradient-to-br from-red-500 to-red-600 text-white font-semibold border-none cursor-pointer transition-all hover:scale-105" data-lat="${lat}" data-lng="${lng}">
-                  Custom Rescue
-                </button>
-                <button class="quick-rescue-btn flex-1 px-3 py-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold border-none cursor-pointer transition-all hover:scale-105" data-lat="${lat}" data-lng="${lng}">
-                  Quick Rescue
-                </button>
-              </div>`;
 
             markerRef.current = window.L.marker([lat, lng], {
               icon: window.L.divIcon({
@@ -541,7 +656,7 @@ export default function UserPage() {
               }),
             })
               .addTo(map)
-              .bindPopup(popupContent + customButtons, {
+              .bindPopup(popupContent, {
                 maxWidth: 420,
                 className: "weather-popup",
               })
@@ -555,52 +670,20 @@ export default function UserPage() {
       });
 
       // Popup event handlers
-      map.on("popupopen", function (e) {
-        const container = e.popup && e.popup._contentNode;
-        if (!container) return;
+      // Popup event handlers
+map.on("popupopen", function (e) {
+  const container = e.popup && e.popup._contentNode;
+  if (!container) return;
 
-        const quick = container.querySelector(".quick-rescue-btn");
-        if (quick) {
-          quick.onclick = (ev) => {
-            const lat = parseFloat(quick.dataset.lat);
-            const lng = parseFloat(quick.dataset.lng);
-            requestRescueAt(lat, lng, "Quick rescue (user clicked popup)");
-          };
-        }
-
-        const customBtn = container.querySelector(".custom-rescue-btn");
-        if (customBtn) {
-          customBtn.onclick = () => {
-            const lat = parseFloat(customBtn.dataset.lat);
-            const lng = parseFloat(customBtn.dataset.lng);
-            const reason = prompt(
-              "Enter rescue reason (e.g. 'sinking', 'engine malfunction', 'medical emergency'):",
-              "sinking"
-            );
-            if (reason) {
-              requestRescueAt(lat, lng, reason);
-            }
-          };
-        }
-
-        const requestBtn = container.querySelector(".request-rescue-btn");
-        if (requestBtn) {
-          requestBtn.onclick = () => {
-            const lat = parseFloat(requestBtn.dataset.lat);
-            const lng = parseFloat(requestBtn.dataset.lng);
-            requestRescueAt(lat, lng, "Storm area rescue request");
-          };
-        }
-
-        const viewBtn = container.querySelector(".view-more-btn");
-        if (viewBtn) {
-          viewBtn.onclick = () => {
-            const lat = parseFloat(viewBtn.dataset.lat);
-            const lng = parseFloat(viewBtn.dataset.lng);
-            map.setView([lat, lng], Math.max(map.getZoom(), 9));
-          };
-        }
-      });
+  const viewBtn = container.querySelector(".view-more-btn");
+  if (viewBtn) {
+    viewBtn.onclick = () => {
+      const lat = parseFloat(viewBtn.dataset.lat);
+      const lng = parseFloat(viewBtn.dataset.lng);
+      map.setView([lat, lng], Math.max(map.getZoom(), 9));
+    };
+  }
+});
 
       // Initial scan and movement handlers
       setTimeout(() => {
@@ -656,49 +739,34 @@ export default function UserPage() {
     return () => clearInterval(interval);
   }, []);
 
+  
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-[#0C0623] to-slate-800">
-      {/* Map */}
-      <div id="map" className="absolute inset-0 z-0" />
+  <div className="min-h-screen bg-gradient-to-br from-slate-900 via-[#0C0623] to-slate-800">
+    {/* Map */}
+    <div id="map" className="absolute inset-0 z-0" />
 
-      <MarineVisualizer lat={selectedLat} lng={selectedLng} />
+    <MarineVisualizer lat={selectedLat} lng={selectedLng} />
 
-      {/* Alerts Panel */}
-      <div className="fixed bottom-4 right-4 z-[1000] w-80">
-        <div className="p-4 border bg-gradient-to-br from-red-900/40 to-orange-900/20 rounded-2xl border-red-500/20 backdrop-blur-sm">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="flex items-center gap-2 text-lg font-bold text-white">
-              <span>⚠️</span>
-              Marine Alerts
-            </h3>
-            <div className="px-3 py-1 text-xs font-semibold text-white bg-red-500 rounded-full">
-              {alerts.length} Active
-            </div>
-          </div>
-          <div className="space-y-2 overflow-y-auto max-h-64">
-            {alerts.length === 0 ? (
-              <div className="py-4 text-center">
-                <div className="mb-2 text-sm text-gray-300">
-                  No active alerts
-                </div>
-                <div className="text-xs text-gray-500">
-                  Storm warnings and safety notices will appear here
-                </div>
-              </div>
-            ) : (
-              alerts.map((a) => (
-                <div
-                  key={a.id}
-                  className="p-3 border rounded-lg bg-white/5 border-red-500/10"
-                >
-                  <div className="text-sm text-white">{a.message}</div>
-                  <div className="mt-1 text-xs text-red-300">{a.time}</div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+    {/* Rescue Button - Top Center */}
+    {userLocation && (
+      <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-[1000]">
+        <button
+          onClick={() => sendRescueRequest(userLocation.lat, userLocation.lng)}
+          disabled={rescueActive}
+          className={`px-8 py-4 rounded-2xl font-bold text-white text-lg transition-all duration-200 border-4 backdrop-blur-sm shadow-2xl ${
+            rescueActive
+              ? "bg-gray-600/80 border-gray-500/50 cursor-not-allowed"
+              : "bg-gradient-to-br from-red-600 to-red-700 border-red-500/50 hover:border-red-400 hover:scale-105 hover:shadow-red-500/50"
+          }`}
+        >
+          {rescueActive ? "🆘 Rescue Sent..." : "🆘 REQUEST RESCUE"}
+        </button>
       </div>
+    )}
+
+    {/* Alerts Panel */}
+          
 
       {/* Control Panel */}
       <div className="fixed top-5 right-5 z-1000 w-80">
@@ -762,51 +830,8 @@ export default function UserPage() {
           </div>
         </div>
       )}
-
-      {/* Rescue Confirmation Modal */}
-      {showRescueConfirm && rescuePendingLocation && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
-          <div className="w-full max-w-lg p-7 border-4 border-red-500 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-[0_24px_80px_rgba(239,68,68,0.25)]">
-            <div className="mb-4 text-center">
-              <div className="mb-2 text-6xl">🆘</div>
-              <h2 className="mb-1 text-lg font-bold text-white">
-                CONFIRM EMERGENCY RESCUE
-              </h2>
-              <p className="text-sm text-gray-400">
-                Auto-sending in {rescueCountdown} second
-                {rescueCountdown !== 1 ? "s" : ""}...
-              </p>
-            </div>
-
-            <div className="p-3 mb-4 text-white rounded-lg bg-white/5">
-              <p className="mb-1">
-                <strong>📍 Location:</strong>{" "}
-                {rescuePendingLocation.lat.toFixed(4)},{" "}
-                {rescuePendingLocation.lng.toFixed(4)}
-              </p>
-              <p className="text-xs text-gray-300">
-                Reason:{" "}
-                <strong className="text-white">{rescuePendingReason}</strong>
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => confirmRescue(null, null)}
-                className="flex-1 py-3 font-bold text-white transition-all duration-200 rounded-lg bg-gradient-to-br from-red-500 to-red-600 hover:scale-105"
-              >
-                SEND NOW
-              </button>
-              <button
-                onClick={cancelRescue}
-                className="flex-1 py-3 font-bold text-white transition-all duration-200 bg-gray-600 rounded-lg hover:scale-105"
-              >
-                CANCEL
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
+
+    
   );
 }

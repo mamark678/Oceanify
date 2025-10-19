@@ -1,8 +1,9 @@
 // React core
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 // Components
 import Navbar from "../../components/Navbar";
 // Ports data
+import { useNavigate } from "react-router-dom";
 import mindanaoPorts from "../../data/ports.json"; // Adjust path as needed
 
 export default function DashboardPage() {
@@ -13,6 +14,9 @@ export default function DashboardPage() {
   const [error, setError] = useState(null);
   const [selectedPort, setSelectedPort] = useState(null);
   const [portLoading, setPortLoading] = useState(false);
+  const [rescueNotifications, setRescueNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const navigate = useNavigate();
 
   // Get user location first
   useEffect(() => {
@@ -97,6 +101,22 @@ export default function DashboardPage() {
     };
 
     getUserLocation();
+  }, []);
+  useEffect(() => {
+    const fetchNotifications = () => {
+      try {
+        const notifications = JSON.parse(localStorage.getItem("rescueNotifications") || "[]");
+        setRescueNotifications(notifications);
+      } catch (err) {
+        console.error("Error fetching notifications", err);
+      }
+    };
+
+    fetchNotifications();
+    
+    // Poll for new notifications every 5 seconds
+    const interval = setInterval(fetchNotifications, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   // Fetch weather data for selected port
@@ -245,99 +265,199 @@ export default function DashboardPage() {
       {/* Main Content */}
       <div className="p-20">
         {/* Header with Port Selector */}
-        <div className="mb-8">
-          <div className="flex flex-col gap-4 mb-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex-1">
-              <h1 className="mb-2 text-3xl font-bold text-white md:text-4xl">
-                Marine Dashboard
-              </h1>
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      selectedPort ? "bg-yellow-400" : "bg-green-400"
-                    } animate-pulse`}
-                  ></div>
-                  <p className="text-sm text-blue-200 md:text-base">
-                    {selectedPort
-                      ? `Viewing: ${selectedPort.port_name}`
-                      : userLocation
-                      ? `Current Position: ${userLocation.latitude.toFixed(
-                          4
-                        )}°N, ${userLocation.longitude.toFixed(4)}°E`
-                      : "Location: Unknown"}
-                  </p>
-                </div>
-                {selectedPort && (
-                  <span className="px-3 py-1 text-xs text-blue-300 border rounded-full bg-blue-500/20 border-blue-500/30">
-                    {selectedPort.location} • {selectedPort.type}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Port Selection */}
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <div className="relative flex-1 min-w-[280px]">
-                <select
-                  className="w-full px-4 py-3 pr-10 text-white transition-all border appearance-none bg-blue-900/50 border-blue-500/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 backdrop-blur-sm"
-                  value={selectedPort ? selectedPort.port_name : ""}
-                  onChange={(e) => {
-                    const portName = e.target.value;
-                    if (portName) {
-                      const port = mindanaoPorts.ports_of_mindanao.find(
-                        (p) => p.port_name === portName
-                      );
-                      handlePortChange(port);
-                    } else {
-                      setSelectedPort(null);
-                      if (userLocation) {
-                        fetchWeatherData(
-                          userLocation.latitude,
-                          userLocation.longitude
-                        );
-                      }
-                    }
-                  }}
-                >
-                  <option value="">Select a Port in Mindanao</option>
-                  {mindanaoPorts.ports_of_mindanao.map((port) => (
-                    <option key={port.port_name} value={port.port_name}>
-                      {port.port_name} - {port.location}
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute text-blue-300 transform -translate-y-1/2 pointer-events-none right-3 top-1/2">
-                  ▼
-                </div>
-              </div>
-
-              {selectedPort && (
-                <button
-                  onClick={() => {
-                    setSelectedPort(null);
-                    if (userLocation) {
-                      fetchWeatherData(
-                        userLocation.latitude,
-                        userLocation.longitude
-                      );
-                    }
-                  }}
-                  className="px-4 py-3 text-white transition-all duration-200 border bg-gray-600/50 hover:bg-gray-700/50 rounded-xl whitespace-nowrap border-gray-500/30 backdrop-blur-sm hover:scale-105 active:scale-95"
-                >
-                  Show My Location
-                </button>
-              )}
-            </div>
-          </div>
-
-          {error && (
-            <div className="flex items-center gap-2 px-4 py-2 text-sm text-yellow-400 border bg-yellow-900/20 border-yellow-500/30 rounded-xl">
-              <span>⚠️</span>
-              <span>{error}</span>
-            </div>
-          )}
+<div className="mb-8">
+  <div className="flex flex-col gap-4 mb-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex-1">
+      <h1 className="mb-2 text-3xl font-bold text-white md:text-4xl">
+        Marine Dashboard
+      </h1>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <div
+            className={`w-3 h-3 rounded-full ${
+              selectedPort ? "bg-yellow-400" : "bg-green-400"
+            } animate-pulse`}
+          ></div>
+          <p className="text-sm text-blue-200 md:text-base">
+            {selectedPort
+              ? `Viewing: ${selectedPort.port_name}`
+              : userLocation
+              ? `Current Position: ${userLocation.latitude.toFixed(
+                  4
+                )}°N, ${userLocation.longitude.toFixed(4)}°E`
+              : "Location: Unknown"}
+          </p>
         </div>
+        {selectedPort && (
+          <span className="px-3 py-1 text-xs text-blue-300 border rounded-full bg-blue-500/20 border-blue-500/30">
+            {selectedPort.location} • {selectedPort.type}
+          </span>
+        )}
+      </div>
+    </div>
+    {/* Notification Bell with Dropdown */}
+<div className="relative">
+  <button
+    onClick={() => setShowNotifications(!showNotifications)}
+    className="px-4 py-3 text-white transition-all duration-200 border bg-blue-900/50 hover:bg-blue-800/50 rounded-xl border-blue-500/30 backdrop-blur-sm hover:scale-105 active:scale-95"
+    title="Rescue Notifications"
+  >
+    <span className="text-2xl">🔔</span>
+    {rescueNotifications.filter(n => n.status === 'pending').length > 0 && (
+      <span className="absolute flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full -top-2 -right-2 animate-pulse">
+        {rescueNotifications.filter(n => n.status === 'pending').length}
+      </span>
+    )}
+  </button>
+
+  {/* Notification Dropdown - positioned relative to button */}
+  {showNotifications && (
+    <div className="absolute right-0 z-50 w-96 mt-2 overflow-hidden border shadow-2xl bg-gradient-to-br from-slate-900/95 to-slate-800/95 rounded-2xl border-blue-500/30 backdrop-blur-sm">
+      <div className="p-4 border-b bg-blue-900/30 border-blue-500/20">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-white">Rescue Notifications</h3>
+          <button
+            onClick={() => setShowNotifications(false)}
+            className="text-2xl text-gray-400 transition-colors hover:text-white"
+          >
+            ×
+          </button>
+        </div>
+        <p className="mt-1 text-sm text-blue-200">
+          {rescueNotifications.filter(n => n.status === 'pending').length} pending
+        </p>
+      </div>
+
+      <div className="max-h-96 overflow-y-auto">
+        {rescueNotifications.length === 0 ? (
+          <div className="p-8 text-center">
+            <div className="mb-2 text-4xl">🔔</div>
+            <p className="text-gray-400">No rescue requests</p>
+          </div>
+        ) : (
+          <div className="p-2 space-y-2">
+            {rescueNotifications.map((notification) => (
+              <div
+                key={notification.id}
+                className={`p-3 rounded-lg border transition-all cursor-pointer ${
+                  notification.read
+                    ? "bg-gray-800/30 border-gray-700/30 hover:bg-gray-800/50"
+                    : "bg-red-900/30 border-red-500/30 hover:bg-red-900/50"
+                }`}
+                onClick={() => {
+                  const updated = rescueNotifications.map(n =>
+                    n.id === notification.id ? { ...n, read: true } : n
+                  );
+                  setRescueNotifications(updated);
+                  localStorage.setItem("rescueNotifications", JSON.stringify(updated));
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 text-2xl">🆘</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-semibold text-white">Emergency Rescue Request</p>
+                      {!notification.read && (
+                        <span className="flex-shrink-0 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-xs text-gray-300">
+                      📍 {notification.latitude.toFixed(4)}°N, {notification.longitude.toFixed(4)}°E
+                    </p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      🕒 {new Date(notification.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {rescueNotifications.length > 0 && (
+        <div className="p-3 border-t bg-slate-800/30 border-blue-500/20">
+          <button
+            onClick={() => {
+              if (window.confirm('Clear all notifications?')) {
+                localStorage.setItem("rescueNotifications", "[]");
+                setRescueNotifications([]);
+              }
+            }}
+            className="w-full px-4 py-2 text-sm font-semibold text-white transition-all bg-red-600 rounded-lg hover:bg-red-700 active:scale-95"
+          >
+            Clear All
+          </button>
+        </div>
+      )}
+    </div>
+  )}
+</div>
+      
+    {/* Port Selection with Notification Bell */}
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="relative flex-1 min-w-[280px]">
+        <select
+          className="w-full px-4 py-3 pr-10 text-white transition-all border appearance-none bg-blue-900/50 border-blue-500/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 backdrop-blur-sm"
+          value={selectedPort ? selectedPort.port_name : ""}
+          onChange={(e) => {
+            const portName = e.target.value;
+            if (portName) {
+              const port = mindanaoPorts.ports_of_mindanao.find(
+                (p) => p.port_name === portName
+              );
+              handlePortChange(port);
+            } else {
+              setSelectedPort(null);
+              if (userLocation) {
+                fetchWeatherData(
+                  userLocation.latitude,
+                  userLocation.longitude
+                );
+              }
+            }
+          }}
+        >
+          <option value="">Select a Port in Mindanao</option>
+          {mindanaoPorts.ports_of_mindanao.map((port) => (
+            <option key={port.port_name} value={port.port_name}>
+              {port.port_name} - {port.location}
+            </option>
+          ))}
+        </select>
+        <div className="absolute text-blue-300 transform -translate-y-1/2 pointer-events-none right-3 top-1/2">
+          ▼
+        </div>
+      </div>
+
+      {selectedPort && (
+        <button
+          onClick={() => {
+            setSelectedPort(null);
+            if (userLocation) {
+              fetchWeatherData(
+                userLocation.latitude,
+                userLocation.longitude
+              );
+            }
+          }}
+          className="px-4 py-3 text-white transition-all duration-200 border bg-gray-600/50 hover:bg-gray-700/50 rounded-xl whitespace-nowrap border-gray-500/30 backdrop-blur-sm hover:scale-105 active:scale-95"
+        >
+          Show My Location
+        </button>
+      )}
+    </div>
+  </div>
+
+  {error && (
+    <div className="flex items-center gap-2 px-4 py-2 text-sm text-yellow-400 border bg-yellow-900/20 border-yellow-500/30 rounded-xl">
+      <span>⚠️</span>
+      <span>{error}</span>
+    </div>
+  )}
+</div>
+
+        
 
         {/* Loading overlay for port data */}
         {portLoading && (
@@ -601,6 +721,8 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+                           
+          
 
           {/* Sidebar - Right Column */}
           <div className="space-y-6 xl:col-span-1">
@@ -652,6 +774,134 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
+            {/* Rescue Notifications - Spans both columns */}
+              {rescueNotifications.length > 0 && (
+                <div className="lg:col-span-2 p-6 border bg-gradient-to-br from-red-900/60 to-orange-900/40 rounded-2xl border-red-500/40 backdrop-blur-sm shadow-2xl shadow-red-500/20">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-12 h-12 bg-red-500 rounded-full animate-pulse">
+                        <span className="text-2xl">🆘</span>
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-white">Active Rescue Requests</h2>
+                        <p className="text-sm text-red-200">
+                          {rescueNotifications.filter(n => n.status === 'pending').length} new request(s) requiring immediate attention
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Clear all rescue notifications?')) {
+                          localStorage.setItem("rescueNotifications", "[]");
+                          setRescueNotifications([]);
+                        }
+                      }}
+                      className="px-4 py-2 text-sm font-semibold text-white transition-all bg-red-600 rounded-lg hover:bg-red-700 active:scale-95"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {rescueNotifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-4 rounded-xl border transition-all duration-300 ${
+                          notification.read
+                            ? "bg-gray-800/50 border-gray-600/50"
+                            : "bg-red-900/50 border-red-500/50 shadow-lg shadow-red-500/20"
+                        }`}
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-3">
+                              <div>
+                                <h3 className="text-lg font-bold text-white">Emergency Rescue</h3>
+                                <p className="text-xs text-red-200">Request ID: #{notification.id}</p>
+                              </div>
+                              {!notification.read && (
+                                <span className="px-2 py-1 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse">
+                                  NEW
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 mb-3">
+                            {/* Row 1 */}
+                            <div className="p-2 border rounded-lg bg-black/20 border-red-500/20">
+                              <div className="text-xs text-gray-400">📍 Location</div>
+                              <div className="text-sm font-semibold text-white">
+                                {notification.latitude.toFixed(2)}°N, {notification.longitude.toFixed(2)}°E
+                              </div>
+                            </div>
+                            <div className="p-2 border rounded-lg bg-black/20 border-red-500/20">
+                              <div className="text-xs text-gray-400">💨 Wind</div>
+                              <div className="text-sm font-semibold text-white">
+                                {notification.weatherConditions?.windSpeed?.toFixed(1) || 'N/A'} km/h
+                              </div>
+                            </div>
+
+                            {/* Row 2 */}
+                            <div className="p-2 border rounded-lg bg-black/20 border-red-500/20">
+                              <div className="text-xs text-gray-400">🌡️ Temperature</div>
+                              <div className="text-sm font-semibold text-white">
+                                {notification.weatherConditions?.temperature?.toFixed(1) || 'N/A'}°C
+                              </div>
+                            </div>
+                            <div className="p-2 border rounded-lg bg-black/20 border-red-500/20">
+                              <div className="text-xs text-gray-400">🌊 Wave</div>
+                              <div className="text-sm font-semibold text-white">
+                                {notification.weatherConditions?.waveHeight?.toFixed(1) || 'N/A'} m
+                              </div>
+                            </div>
+                          </div>
+
+                            <div className="mb-3 text-xs text-gray-400">
+                              🕒 {new Date(notification.timestamp).toLocaleString()}
+                            </div>
+
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  const updated = rescueNotifications.map(n =>
+                                    n.id === notification.id ? { ...n, read: true } : n
+                                  );
+                                  setRescueNotifications(updated);
+                                  localStorage.setItem("rescueNotifications", JSON.stringify(updated));
+                                }}
+                                className={`flex-1 px-3 py-2 text-xs font-semibold rounded-lg transition-all ${
+                                  notification.read
+                                    ? "bg-gray-600 text-gray-300 cursor-not-allowed"
+                                    : "bg-green-600 text-white hover:bg-green-700 active:scale-95"
+                                }`}
+                                disabled={notification.read}
+                              >
+                                {notification.read ? "✓ Acknowledged" : "✓ Acknowledge"}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  navigate('/map', { 
+                                    state: { 
+                                      rescueLocation: {
+                                        lat: notification.latitude,
+                                        lng: notification.longitude,
+                                        notificationId: notification.id
+                                      }
+                                    }
+                                  });
+                                }}
+                                className="flex-1 px-3 py-2 text-xs font-semibold text-white transition-all bg-blue-600 rounded-lg hover:bg-blue-700 active:scale-95"
+                              >
+                                📍 Locate
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
           </div>
         </div>
       </div>
