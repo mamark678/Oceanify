@@ -2,13 +2,7 @@ services:
   - type: web
     name: oceanify
     env: php
-    phpVersion: 8.2
-    buildCommand: |
-      curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-      apt-get install -y nodejs
-      cd Frontend && npm ci && npm run build
-      mkdir -p ../Backend/public/frontend
-      mv -f Frontend/dist/* Backend/public/frontend/
-      cd Backend && composer install --no-dev --optimize-autoloader
+    region: singapore
+    plan: free
+    buildCommand: curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs && cd Frontend && npm ci && npm run build && mkdir -p ../Backend/public/frontend && mv -f dist/* ../Backend/public/frontend/ && cd ../Backend && composer install --no-dev --optimize-autoloader
     startCommand: cd Backend && php artisan serve --host=0.0.0.0 --port=$PORT
-    healthCheckPath: /
