@@ -1,7 +1,7 @@
 services:
   - type: web
     name: oceanify
-    env: php
+    runtime: php
     region: singapore
     plan: free
     buildCommand: curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs && cd Frontend && npm ci && npm run build && mkdir -p ../Backend/public/frontend && mv -f dist/* ../Backend/public/frontend/ && cd ../Backend && composer install --no-dev --optimize-autoloader
